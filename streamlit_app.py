@@ -363,7 +363,7 @@ st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på ind
 @st.dialog("Översiktskarta")
 def visa_karta_dialog():
     st.subheader("Karta över bandelar A, B, C, E och EM")
-    st.image("karta.png")
+    st.image("Karta.png")
 
 
 # 2. SKAPA knappen som anropar funktionen
