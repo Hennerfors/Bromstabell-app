@@ -358,6 +358,20 @@ with col2:
     st.image("OnRail.png", width=300)
 st.title('🚄 Hastighetskollen')
 st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från Trafikverkets tabeller.")
+# 1. DEFINIERA en funktion för din dialogruta
+#    Använd "@st.dialog()" som en "dekoratör" ovanför funktionen.
+@st.dialog("Översiktskarta")
+def visa_karta_dialog():
+    st.subheader("Karta över bandelar A, B, C, E och EM")
+    st.image("karta.png")
+
+
+# 2. SKAPA knappen som anropar funktionen
+#    Detta är den del du placerar där du vill att knappen ska synas.
+
+if st.button("🗺️ Översiktskarta Bromstabeller"):
+    visa_karta_dialog() # Anropa funktionen när knappen klickas
+
 
 # Välj bana
 bana_vald = st.selectbox(
@@ -400,3 +414,4 @@ if st.button('Hitta högsta tillåtna hastighet'):
         st.success(f"Resultatet är baserat på tabellen för bana **{bana_vald}**.")
     else:
         st.error(resultat)
+      
