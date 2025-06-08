@@ -353,6 +353,9 @@ def hitta_max_hastighet(bana, tåglängd, bromsprocent):
 # STEG 3: WEBBAPPLIKATION MED STREAMLIT
 # ----------------------------------------
 st.set_page_config(page_title="Hastighetskollen", page_icon="🚄")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("OnRail.png", width=300)
 st.title('🚄 Hastighetskollen')
 st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från Trafikverkets tabeller.")
 
