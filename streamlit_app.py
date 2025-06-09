@@ -194,7 +194,7 @@ def hitta_hastighet_fra_bremsetabell(fall, tillgänglig_bremseprosent):
 # STEG 3: WEBBAPPLIKATION MED STREAMLIT
 # ==============================================================================
 
-st.set_page_config(page_title="Tåghastighetskalkyler", page_icon="🚄", layout="wide")
+st.set_page_config(page_title="Bromsprocenttabeller", page_icon="🚂", layout="wide")
 
 # Centrerad logotyp
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -204,18 +204,18 @@ with col2:
     except Exception:
         st.write(" ") # If image is not found, leave space
 
-st.title('🚄 Tåghastighetskalkyler')
+st.title('🚂 Bromsprocenttabeller')
 st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från svenska och norska tabeller.")
 
 # Skapa två flikar för de olika kalkylatorerna
-tab1, tab2 = st.tabs(["Hastighetskollen (Sverige)", "Kalkylator för Bromstabell i (Norge)"])
+tab1, tab2 = st.tabs(["Bromsprocenttabellen (Sverige)", "Bremsetabell I (Norge)"])
 
 
 # ----------------------------------------------------
 # Flik 1: Hastighetskollen
 # ----------------------------------------------------
 with tab1:
-    st.header("Hastighetskollen enligt Trafikverkets tabeller")
+    st.header("Svenska Bromsprocenttabellen")
     
     # Dialogruta för karta
     @st.dialog("Översiktskarta")
@@ -272,13 +272,20 @@ with tab1:
             st.success(f"Resultatet är baserat på tabellen för bana **{bana_vald}**.")
         else:
             st.error(resultat)
+    
+    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.") 
 
+            
+
+           
+
+    
 # ----------------------------------------------------
 # Flik 2: Bromstabell I
 # ----------------------------------------------------
 with tab2:
-    st.header("Kalkylator för Bromstabell i Norge")
-    st.write("Ange bestämmande fall och tillgänglig bromsprocent för att hitta den högsta tillåtna hastigheten.")
+    st.header("Bremsetabell Norge")
+    st.write("Skriv inn kontrolltilfellet og tilgjengelig bremseprosent for å finne maksimalt tillatt hastighet.")
     
    # Input-fält i kolumner
     col1_tab2, col2_tab2 = st.columns(2)
