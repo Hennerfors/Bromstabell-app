@@ -4,20 +4,7 @@ import streamlit as st
 # STEG 1: DATADEFINITIONER
 # ==============================================================================
 
-# ----------------------------------------------------
-# Data för Hastighetskollen (Svenska tabeller)
-# ----------------------------------------------------
-# Datastruktur:
-# {
-#   'Bana': {
-#     (min_längd, max_längd): [
-#       (min_broms, max_broms, hastighet),
-#       ...
-#     ],
-#     ...
-#   }
-# }
-# Not: -1 representerar ingen övre gräns.
+# Data för svenska tabeller (A, B, C, E, EM)
 HASTIGHETS_DATA = {
     'A': {
         (0, 100): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 138, 130), (139, 143, 140), (144, -1, 150)],
@@ -89,11 +76,7 @@ HASTIGHETS_DATA = {
         (851, 900): [ (0, 29, 40), (30, 31, 50), (32, 36, 60), (37, 40, 70), (41, 45, 80), (46, 50, 90), (51, 56, 100), (57, 60, 110), (61, 73, 120), (74, 81, 130), (82, 89, 140), (90, 97, 150), (98, 103, 160), (104, 110, 170), (111, 117, 180), (118, 123, 190), (124, -1, 200)]
     }
 }
-
-# ----------------------------------------------------
-# Data för Bromstabell I (Norska tabeller)
-# ----------------------------------------------------
-# Struktur: {fall: {hastighet: erforderlig_bromsprocent}}
+# Data för Bremsetabell I
 BREMSETABELL_1 = {
     0: {15: 5, 20: 5, 25: 6, 30: 7, 35: 7, 40: 8, 45: 10, 50: 13, 55: 16, 60: 20, 65: 24, 70: 29, 75: 35, 80: 42, 85: 52, 90: 59, 95: 69, 100: 79, 105: 89, 110: 98, 115: 109, 120: 120},
     1: {15: 5, 20: 5, 25: 6, 30: 7, 35: 7, 40: 8, 45: 10, 50: 14, 55: 17, 60: 22, 65: 26, 70: 31, 75: 37, 80: 44, 85: 52, 90: 61, 95: 71, 100: 81, 105: 91, 110: 100, 115: 111, 120: 122},
@@ -128,6 +111,87 @@ BREMSETABELL_1 = {
     50: {15: 55, 20: 58, 25: 63, 30: 67, 35: 72, 40: 78},
     55: {15: 64, 20: 67, 25: 70, 30: 77}
 }
+# Data för Bremsetabell II
+BREMSETABELL_2 = {
+    0: {15: 5, 20: 5, 25: 6, 30: 5, 35: 5, 40: 7, 45: 10, 50: 13, 55: 18, 60: 23, 65: 29, 70: 36, 75: 45, 80: 55},
+    4: {15: 5, 20: 5, 25: 5, 30: 7, 35: 9, 40: 11, 45: 14, 50: 18, 55: 23, 60: 28, 65: 34, 70: 42, 75: 51, 80: 62},
+    5: {15: 5, 20: 6, 25: 6, 30: 8, 35: 10, 40: 12, 45: 15, 50: 19, 55: 24, 60: 29, 65: 36, 70: 44, 75: 53, 80: 64},
+    6: {15: 5, 20: 6, 25: 7, 30: 9, 35: 11, 40: 13, 45: 17, 50: 20, 55: 25, 60: 31, 65: 37, 70: 45, 75: 55, 80: 66},
+    7: {15: 5, 20: 7, 25: 8, 30: 10, 35: 11, 40: 14, 45: 18, 50: 21, 55: 26, 60: 32, 65: 39, 70: 47, 75: 56, 80: 68},
+    8: {15: 5, 20: 8, 25: 9, 30: 11, 35: 12, 40: 15, 45: 18, 50: 23, 55: 28, 60: 33, 65: 40, 70: 48, 75: 58, 80: 70},
+    9: {15: 5, 20: 9, 25: 10, 30: 11, 35: 14, 40: 17, 45: 20, 50: 24, 55: 29, 60: 35, 65: 42, 70: 50, 75: 60, 80: 72},
+    10: {15: 6, 20: 10, 25: 11, 30: 12, 35: 15, 40: 18, 45: 21, 50: 26, 55: 31, 60: 36, 65: 43, 70: 52, 75: 62, 80: 74},
+    11: {15: 7, 20: 10, 25: 11, 30: 13, 35: 16, 40: 18, 45: 22, 50: 26, 55: 32, 60: 38, 65: 45, 70: 54, 75: 63, 80: 76},
+    12: {15: 8, 20: 11, 25: 12, 30: 14, 35: 17, 40: 20, 45: 24, 50: 28, 55: 33, 60: 40, 65: 47, 70: 55, 75: 65, 80: 77},
+    13: {15: 9, 20: 12, 25: 14, 30: 16, 35: 18, 40: 21, 45: 25, 50: 29, 55: 34, 60: 40, 65: 48, 70: 56, 75: 67, 80: 80},
+    14: {15: 9, 20: 13, 25: 15, 30: 17, 35: 19, 40: 22, 45: 26, 50: 31, 55: 36, 60: 42, 65: 49, 70: 58, 75: 69, 80: 82},
+    15: {15: 10, 20: 14, 25: 16, 30: 18, 35: 20, 40: 24, 45: 27, 50: 32, 55: 38, 60: 44, 65: 51, 70: 60, 75: 70, 80: 84},
+    16: {15: 11, 20: 15, 25: 17, 30: 18, 35: 21, 40: 25, 45: 28, 50: 33, 55: 39, 60: 46, 65: 53, 70: 62, 75: 72, 80: 85},
+    17: {15: 11, 20: 16, 25: 18, 30: 19, 35: 22, 40: 26, 45: 30, 50: 34, 55: 40, 60: 47, 65: 55, 70: 63, 75: 74, 80: 87},
+    18: {15: 12, 20: 17, 25: 18, 30: 20, 35: 24, 40: 27, 45: 31, 50: 36, 55: 41, 60: 48, 65: 56, 70: 65, 75: 76, 80: 90},
+    19: {15: 13, 20: 18, 25: 19, 30: 22, 35: 25, 40: 28, 45: 33, 50: 38, 55: 43, 60: 50, 65: 58, 70: 67, 75: 77},
+    20: {15: 14, 20: 18, 25: 20, 30: 23, 35: 26, 40: 29, 45: 33, 50: 39, 55: 45, 60: 51, 65: 59, 70: 69, 75: 79},
+    21: {15: 15, 20: 19, 25: 21, 30: 24, 35: 27, 40: 31, 45: 35, 50: 40, 55: 46, 60: 53, 65: 61, 70: 70},
+    22: {15: 16, 20: 20, 25: 22, 30: 25, 35: 28, 40: 32, 45: 36, 50: 41, 55: 48, 60: 55, 65: 62, 70: 72},
+    23: {15: 17, 20: 21, 25: 23, 30: 26, 35: 29, 40: 33, 45: 38, 50: 43, 55: 49, 60: 56, 65: 64, 70: 74},
+    24: {15: 18, 20: 22, 25: 24, 30: 26, 35: 31, 40: 34, 45: 39, 50: 44, 55: 50, 60: 57, 65: 66, 70: 75},
+    25: {15: 19, 20: 23, 25: 26, 30: 28, 35: 32, 40: 36, 45: 40, 50: 46, 55: 52, 60: 59, 65: 67, 70: 77},
+    30: {15: 26, 20: 28, 25: 31, 30: 33, 35: 38, 40: 42, 45: 47, 50: 53, 55: 59, 60: 67, 65: 76},
+    35: {15: 31, 20: 34, 25: 39, 30: 43, 35: 48, 40: 55, 45: 63, 50: 72, 55: 83},
+    40: {15: 38, 20: 40, 25: 45, 30: 50, 35: 57, 40: 67, 45: 77},
+    45: {15: 46, 20: 48, 25: 54, 30: 59, 35: 67, 40: 76},
+    50: {15: 55, 20: 59, 25: 63, 30: 70, 35: 78},
+    55: {20: 67, 25: 71, 30: 77, 35: 84}
+}
+# Data för Bremsetabell III
+BREMSETABELL_3 = {
+    0: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 20, 70: 20, 75: 24, 80: 28, 85: 33, 90: 38, 95: 43, 100: 49, 105: 55, 110: 61, 115: 68, 120: 75},
+    1: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 22, 70: 22, 75: 26, 80: 30, 85: 35, 90: 39, 95: 45, 100: 51, 105: 57, 110: 63, 115: 70, 120: 77},
+    2: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 23, 70: 24, 75: 28, 80: 32, 85: 36, 90: 41, 95: 47, 100: 53, 105: 59, 110: 65, 115: 72, 120: 79},
+    3: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 24, 70: 25, 75: 29, 80: 33, 85: 38, 90: 43, 95: 48, 100: 54, 105: 60, 110: 66, 115: 73, 120: 80},
+    4: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 22, 65: 26, 70: 27, 75: 31, 80: 35, 85: 39, 90: 44, 95: 50, 100: 56, 105: 62, 110: 68, 115: 75, 120: 82},
+    5: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 23, 65: 27, 70: 29, 75: 31, 80: 35, 85: 39, 90: 44, 95: 50, 100: 56, 105: 62, 110: 68, 115: 75, 120: 82},
+    6: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 24, 65: 28, 70: 30, 75: 31, 80: 35, 85: 39, 90: 44, 95: 50, 100: 56, 105: 62, 110: 68, 115: 75, 120: 82},
+    7: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 22, 60: 26, 65: 30, 70: 32, 75: 37, 80: 41, 85: 46, 90: 52, 95: 57, 100: 63, 105: 70, 110: 76, 115: 83, 120: 91},
+    8: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 23, 60: 27, 65: 31, 70: 34, 75: 38, 80: 43, 85: 48, 90: 53, 95: 59, 100: 65, 105: 71, 110: 78, 115: 85, 120: 92},
+    10: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 22, 55: 25, 60: 29, 65: 33, 70: 37, 75: 42, 80: 46, 85: 52, 90: 57, 95: 63, 100: 69, 105: 75, 110: 81, 115: 88, 120: 96},
+    12: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 23, 50: 26, 55: 29, 60: 33, 65: 36, 70: 41, 75: 45, 80: 50, 85: 55, 90: 60, 95: 66, 100: 72, 105: 78, 110: 85, 115: 92, 120: 99},
+    14: {20: 20, 25: 20, 30: 20, 35: 20, 40: 21, 45: 24, 50: 27, 55: 30, 60: 34, 65: 39, 70: 44, 75: 49, 80: 53, 85: 58, 90: 64, 95: 59, 100: 75, 105: 82, 110: 88, 115: 95, 120: 102},
+    16: {20: 20, 25: 21, 30: 23, 35: 25, 40: 27, 45: 30, 50: 33, 55: 36, 60: 39, 65: 43, 70: 47, 75: 52, 80: 57, 85: 62, 90: 67, 95: 73, 100: 79, 105: 85, 110: 92, 115: 99, 120: 106},
+    18: {20: 23, 25: 25, 30: 26, 35: 28, 40: 31, 45: 33, 50: 36, 55: 39, 60: 43, 65: 47, 70: 51, 75: 55, 80: 60, 85: 65, 90: 71, 95: 76, 100: 82, 105: 89, 110: 95, 115: 102, 120: 109},
+    20: {20: 27, 25: 28, 30: 30, 35: 32, 40: 34, 45: 37, 50: 40, 55: 43, 60: 46, 65: 50, 70: 54, 75: 59, 80: 64, 85: 69, 90: 74, 95: 80, 100: 86, 105: 92, 110: 99, 115: 105, 120: 113},
+    22: {20: 30, 25: 33, 30: 33, 35: 35, 40: 37, 45: 40, 50: 43, 55: 46, 60: 50, 65: 54, 70: 58, 75: 62, 80: 67, 85: 72, 90: 77, 95: 83, 100: 89, 105: 95, 110: 102, 115: 109, 120: 116},
+    25: {20: 35, 25: 37, 30: 40, 35: 40, 40: 43, 45: 45, 50: 48, 55: 51, 60: 55, 65: 59, 70: 63, 75: 67, 80: 72, 85: 77, 90: 83, 95: 88, 100: 94, 105: 100, 110: 107, 115: 114, 120: 121},
+    30: {20: 44, 25: 45, 30: 47, 35: 49, 40: 51, 45: 54, 50: 57, 55: 60, 60: 63, 65: 67, 70: 71, 75: 76, 80: 81, 85: 86, 90: 91, 95: 97, 100: 103, 105: 109, 110: 116, 115: 123, 120: 130}
+}
+# Data för Bremsetabell IV
+BREMSETABELL_4 = {
+    0: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 20, 110: 23, 120: 29},
+    1: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 20, 110: 24, 120: 30},
+    2: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 20, 110: 26, 120: 32},
+    3: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 22, 110: 27, 120: 33},
+    4: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 23, 110: 28, 120: 35},
+    5: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 25, 110: 30, 120: 36},
+    6: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 26, 110: 31, 120: 38},
+    8: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 29, 110: 34, 120: 41},
+    10: {20: 20, 30: 20, 40: 20, 50: 20, 60: 21, 70: 21, 80: 22, 90: 22, 100: 32, 110: 37, 120: 44},
+    12: {20: 20, 30: 21, 40: 22, 50: 22, 60: 25, 70: 25, 80: 26, 90: 26, 100: 35, 110: 40, 120: 47},
+    15: {20: 28, 30: 28, 40: 29, 50: 29, 60: 31, 70: 31, 80: 32, 90: 32, 100: 39, 110: 45, 120: 52},
+    18: {20: 34, 30: 34, 40: 35, 50: 35, 60: 37, 70: 37, 80: 38, 90: 38, 100: 44, 110: 50, 120: 57},
+    20: {20: 39, 30: 39, 40: 40, 50: 40, 60: 41, 70: 41, 80: 42, 90: 41, 100: 47, 110: 53, 120: 60},
+    22: {20: 43, 30: 43, 40: 44, 50: 44, 60: 45, 70: 45, 80: 46, 90: 45, 100: 50, 110: 56, 120: 63},
+    25: {20: 50, 30: 50, 40: 51, 50: 51, 60: 52, 70: 52, 80: 53, 90: 42, 100: 55, 110: 61, 120: 68},
+    27: {20: 54, 30: 54, 40: 55, 50: 55, 60: 56, 70: 56, 80: 57, 90: 46, 100: 58, 110: 64, 120: 71},
+    30: {20: 60, 30: 60, 40: 61, 50: 61, 60: 62, 70: 62, 80: 63, 90: 62, 100: 64, 110: 69, 120: 76},
+}
+
+# Samla alla norska tabeller i en struktur
+NORSKA_TABELLER = {
+    "I": BREMSETABELL_1,
+    "II": BREMSETABELL_2,
+    "III": BREMSETABELL_3,
+    "IV": BREMSETABELL_4
+}
 
 # ==============================================================================
 # STEG 2: LOGIK OCH FUNKTIONER
@@ -137,87 +201,78 @@ BREMSETABELL_1 = {
 # Sökfunktion för Hastighetskollen
 # ----------------------------------------------------
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
-    """
-    Hittar den maximala hastigheten genom att slå upp i HASTIGHETS_DATA.
-    """
     if bana not in HASTIGHETS_DATA:
         return "Okänd bana vald."
-
-    # Hitta rätt längdintervall
     valt_längdintervall = None
     for (min_längd, max_längd), data in HASTIGHETS_DATA[bana].items():
         if min_längd <= tåglängd <= max_längd:
             valt_längdintervall = data
             break
-
     if not valt_längdintervall:
         return "Tåglängden finns inte med i tabellen för den valda banan."
-
-    # Hitta rätt hastighet baserat på bromsprocent
     for min_broms, max_broms, hastighet in valt_längdintervall:
-        # Hantera "oändligt" intervall (där vi använde -1)
         if max_broms == -1 and bromsprocent >= min_broms:
             return hastighet
-        # Hantera vanliga intervall
         if min_broms <= bromsprocent <= max_broms:
             return hastighet
+    return "Ingen hastighet hittades för angiven bromsprocent."
 
-    return "Ingen hastighet hittades för angiven bromsprocent. Den kan vara för låg."
+# --- NYA FUNKTIONER FÖR NORGE ---
 
-# ----------------------------------------------------
-# Sökfunktion för Bromstabell I
-# ----------------------------------------------------
-def hitta_hastighet_fra_bremsetabell(fall, tillgänglig_bremseprosent):
-    """
-    Hittar den högsta möjliga hastigheten från Bremsetabell I.
-    """
-    if fall not in BREMSETABELL_1:
-        return f"Bestämmande fall {fall}‰ finns inte i tabellen."
-
-    hastighetsdata_for_fall = BREMSETABELL_1[fall]
+def sök_i_enkel_bremsetabell(tabell_data, fall, bromsprocent, tabell_namn):
+    """Söker i en enskild norsk bremsetabell och returnerar hastigheten."""
     
-    # Sortera hastigheterna från högst till lägst för att hitta den maximala först
+    # Hantera specialregeln för fall 1-3 ‰ för tabell II, III och IV
+    aktuellt_fall = fall
+    if tabell_namn in ["II", "III", "IV"] and 1 <= fall <= 3:
+        aktuellt_fall = 4
+        
+    if aktuellt_fall not in tabell_data:
+        return f"Fall {fall}‰ ej funnet"
+
+    hastighetsdata_for_fall = tabell_data[aktuellt_fall]
     sorterade_hastigheter = sorted(hastighetsdata_for_fall.keys(), reverse=True)
     
     for hastighet in sorterade_hastigheter:
         erforderlig_bremseprosent = hastighetsdata_for_fall[hastighet]
-        
-        # Om vår tillgängliga bromsprocent är tillräcklig, är detta vår maxhastighet
-        if tillgänglig_bremseprosent >= erforderlig_bremseprosent:
+        if bromsprocent >= erforderlig_bremseprosent:
             return hastighet
             
-    # Om ingen hastighet hittades är bromsprocenten för låg
-    return "Bromsprocenten är för låg för körning på denna sträcka."
+    return "För låg broms"
 
+def hitta_norska_hastigheter(fall, bromsprocent):
+    """Söker igenom alla norska tabeller och returnerar en dictionary med resultat."""
+    resultat_per_tabell = {}
+    for namn, data in NORSKA_TABELLER.items():
+        resultat = sök_i_enkel_bremsetabell(data, fall, bromsprocent, namn)
+        resultat_per_tabell[f"Tabell {namn}"] = resultat
+    return resultat_per_tabell
 
-# ==============================================================================
+## ==============================================================================
 # STEG 3: WEBBAPPLIKATION MED STREAMLIT
 # ==============================================================================
 
 st.set_page_config(page_title="Bromsprocenttabeller", page_icon="🚂", layout="wide")
 
-# Centrerad logotyp
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     try:
         st.image("OnRail.png", width=300)
     except Exception:
-        st.write(" ") # If image is not found, leave space
+        st.write(" ") 
 
 st.title('🚂 Bromsprocenttabeller')
 st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från svenska och norska tabeller.")
 
-# Skapa två flikar för de olika kalkylatorerna
-tab1, tab2 = st.tabs(["Bromsprocenttabellen (Sverige)", "Bremsetabell I (Norge)"])
-
+tab1, tab2 = st.tabs(["Bromsprocenttabeller (Sverige)", "Bremsetabeller (Norge)"])
 
 # ----------------------------------------------------
-# Flik 1: Hastighetskollen
+# Flik 1: Svenska tabeller
 # ----------------------------------------------------
 with tab1:
     st.header("Svenska Bromsprocenttabellen")
+    st.write("Ange tåglängd och bromsprocent för att se högsta tillåtna hastighet på **samtliga** svenska bandelar.")
     
-    # Dialogruta för karta
     @st.dialog("Översiktskarta")
     def visa_karta_dialog():
         st.subheader("Karta över bandelar A, B, C, E och EM")
@@ -228,100 +283,117 @@ with tab1:
 
     if st.button("🗺️ Visa översiktskarta över svenska bandelar"):
         visa_karta_dialog()
-
-    # Välj bana
-    bana_vald = st.selectbox(
-        'Välj bana:',
-        options=list(HASTIGHETS_DATA.keys()),
-        key='bana_select'
-    )
-
-    # Mata in värden
+    
     kol1, kol2 = st.columns(2)
     with kol1:
         tåglängd_inmatad = st.number_input(
-            'Ange tåglängd (meter):',
-            min_value=0,
-            max_value=1500,
-            value=350,
-            step=10,
+            'Ange tåglängd (meter):', min_value=0, max_value=1500, value=350, step=10,
             help="Ange tågets totala längd i meter."
         )
-
     with kol2:
         bromsprocent_inmatad_tab1 = st.number_input(
-            'Ange tillgänglig bromsprocent:',
-            min_value=0,
-            max_value=200,
-            value=100,
-            step=1,
-            help="Ange den tillgängliga bromsprocenten för tågsättet.",
-            key='broms_tab1'
+            'Ange tillgänglig bromsprocent:', min_value=0, max_value=200, value=100, step=1,
+            help="Ange den tillgängliga bromsprocenten för tågsättet.", key='broms_tab1'
         )
 
-    # Knapp och resultat
     if st.button('Hitta högsta tillåtna hastighet', key='button_tab1'):
-        resultat = hitta_max_hastighet(bana_vald, tåglängd_inmatad, bromsprocent_inmatad_tab1)
+        # Samma beräkning som tidigare
+        hastighets_resultat = {}
+        for bana in HASTIGHETS_DATA.keys():
+            resultat = hitta_max_hastighet(bana, tåglängd_inmatad, bromsprocent_inmatad_tab1)
+            hastighets_resultat[bana] = resultat
 
-        st.subheader('Resultat')
-        if isinstance(resultat, int):
+        # --- NY SAMMANFATTNINGSDEL ---
+        st.subheader("Sammanfattning")
+        
+        giltiga_hastigheter = [h for h in hastighets_resultat.values() if isinstance(h, int)]
+        
+        if giltiga_hastigheter:
+            min_hastighet = min(giltiga_hastigheter)
             st.metric(
-                label=f"Högsta tillåtna hastighet (sth)",
-                value=f"{resultat} km/h"
+                label="LÄGSTA GÄLLANDE HASTIGHET (ALLA BANOR)",
+                value=f"{min_hastighet} km/h"
             )
-            st.success(f"Resultatet är baserat på tabellen för bana **{bana_vald}**.")
+            st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den lägsta hastigheten.")
         else:
-            st.error(resultat)
-    
-    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.") 
+            st.warning("Inga giltiga hastigheter kunde beräknas för angivna värden.")
 
-            
+        st.divider()
+        
+        # --- DETALJERAD VY (som tidigare) ---
+        st.subheader("Detaljerat resultat per bana")
+        cols = st.columns(len(hastighets_resultat))
+        for i, (bana, hastighet) in enumerate(hastighets_resultat.items()):
+            with cols[i]:
+                if isinstance(hastighet, int):
+                    st.metric(label=f"Bana {bana}", value=f"{hastighet} km/h")
+                else:
+                    st.metric(label=f"Bana {bana}", value="-")
+                    st.caption(hastighet) 
 
-           
+    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
 
-    
 # ----------------------------------------------------
-# Flik 2: Bromstabell I
+# Flik 2: Norska tabeller (OMBYGGD)
 # ----------------------------------------------------
 with tab2:
-    st.header("Bremsetabell Norge")
-    st.write("Skriv inn kontrolltilfellet og tilgjengelig bremseprosent for å finne maksimalt tillatt hastighet.")
+    st.header("Norska Bremsetabeller (I, II, III, IV)")
+    st.write("Ange bestämmande fall och bromsprocent för att se tillåten hastighet enligt varje tabell.")
     
-   # Input-fält i kolumner
     col1_tab2, col2_tab2 = st.columns(2)
-
     with col1_tab2:
-        # Byt ut selectbox mot number_input för att tillåta fri inmatning.
         fall_inmatad = st.number_input(
-            'Ange bestämmande fall (‰):',
-            min_value=0,
-            value=10, # Sätter ett vanligt standardvärde
-            step=1,
-            help="Ange den största medellutningen i promille. Appen meddelar om det exakta värdet inte finns i tabellen."
+            'Ange bestämmande fall (‰):', min_value=0, value=10, step=1,
+            help="Ange den största medellutningen i promille."
         )
-
     with col2_tab2:
         bremseprosent_inmatad_tab2 = st.number_input(
-            'Ange tillgänglig bromsprocent (%):',
-            min_value=0,
-            max_value=200,
-            value=100,
-            step=1,
+            'Ange tillgänglig bromsprocent (%):', min_value=0, max_value=200, value=100, step=1,
             key='broms_tab2'
         )
 
-    # Knapp och resultatvisning
     if st.button('Beräkna hastighet', key='button_tab2'):
-        resultat_tab2 = hitta_hastighet_fra_bremsetabell(fall_inmatad, bremseprosent_inmatad_tab2)
+        # Anropa den nya huvudfunktionen för norska tabeller
+        resultat_per_tabell = hitta_norska_hastigheter(fall_inmatad, bremseprosent_inmatad_tab2)
 
-        st.subheader("Resultat")
-        if isinstance(resultat_tab2, int):
+        st.subheader("Sammanfattning")
+        
+        # Hitta den lägsta giltiga hastigheten och från vilken tabell den kom
+        giltiga_hastigheter = {
+            tabell: hastighet 
+            for tabell, hastighet in resultat_per_tabell.items() 
+            if isinstance(hastighet, int)
+        }
+        
+        if giltiga_hastigheter:
+            lagsta_hastighet_tabell = min(giltiga_hastigheter, key=giltiga_hastigheter.get)
+            lagsta_hastighet_varde = giltiga_hastigheter[lagsta_hastighet_tabell]
+            
             st.metric(
-                label=f"Högsta tillåtna hastighet",
-                value=f"{resultat_tab2} km/h",
-                help=f"För fall {fall_inmatad}‰ och bromsprocent {bremseprosent_inmatad_tab2}%."
+                label=f"LÄGSTA GÄLLANDE HASTIGHET (från {lagsta_hastighet_tabell})",
+                value=f"{lagsta_hastighet_varde} km/h"
             )
+            st.success("Detta är den mest restriktiva hastigheten.")
         else:
-            st.error(resultat_tab2)
+            st.warning("Ingen giltig hastighet kunde beräknas från någon av tabellerna med angivna värden.")
+
+        st.divider()
+        st.subheader("Detaljerat resultat per tabell")
+
+        # Skapa 4 kolumner för detaljerna
+        cols = st.columns(4)
+        for i, (tabell_namn, hastighet) in enumerate(resultat_per_tabell.items()):
+            with cols[i]:
+                if isinstance(hastighet, int):
+                    st.metric(label=tabell_namn, value=f"{hastighet} km/h")
+                    # Lägg till notis om specialregeln använts
+                    if tabell_namn in ["Tabell II", "Tabell III", "Tabell IV"] and 1 <= fall_inmatad <= 3:
+                        st.caption(f"Använder data för 4‰")
+                else:
+                    st.metric(label=tabell_namn, value="-")
+                    st.caption(hastighet)
     
-    st.info("Observera: Data är tolkad från Bromstabell I. Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
+    st.info("""
+    **Observera:** * Data är tolkad från Bremsetabell I, II, III och IV. Dubbelkolla alltid mot officiella källor.
+    * För tabell II, III och IV används data för 4‰ fall om det angivna fallet är 1, 2 eller 3‰.
+    """)
