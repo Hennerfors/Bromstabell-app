@@ -311,7 +311,7 @@ with tab1:
         if giltiga_hastigheter:
             min_hastighet = min(giltiga_hastigheter)
             st.metric(
-                label="LÄGSTA GÄLLANDE HASTIGHET (ALLA BANOR)",
+                label="LÄGSTA HASTIGHET",
                 value=f"{min_hastighet} km/h"
             )
             st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den lägsta hastigheten.")
