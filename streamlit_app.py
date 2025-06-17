@@ -368,7 +368,7 @@ def render_svenska_page():
                         st.metric(label=f"Bana {bana}", value="-")
                         st.caption(hastighet)
 
-    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
+    st.info("Observera: Data är tolkad från Bromstabeller A, B, C, D, D+, E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
 
 # Funktion för att rita upp norska sidan
 def render_norska_page():
