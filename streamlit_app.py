@@ -373,7 +373,7 @@ def render_svenska_page():
 # Funktion för att rita upp norska sidan
 def render_norska_page():
     st.button("⬅️ Tilbake til hovedmenyen", on_click=go_to_main)
-    st.header("Norsk Bremsetabeller (I, II, III, IV)")
+    st.markdown("<h1 style='text-align: center;'>Norsk Bremsetabeller (I, II, III, IV)</h1>", unsafe_allow_html=True)
     st.write("Skriv inn det avgjørende tilfellet og bremseprosenten for å se tillatt hastighet i henhold til hver tabell..")
     
     col1_tab2, col2_tab2 = st.columns(2)
