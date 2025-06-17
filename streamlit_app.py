@@ -292,7 +292,7 @@ def render_main_page():
 # Funktion för att rita upp svenska sidan
 def render_svenska_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
-    st.header("Svenska Bromsprocenttabellen")
+    st.markdown("<h1 style='text-align: center;'>Svenska Bromsprocenttabellen</h1>", unsafe_allow_html=True)
     st.write("Ange tåglängd och bromsprocent för att se högsta tillåtna hastighet på **samtliga** svenska bandelar.")
     
     @st.dialog("Översiktskarta")
