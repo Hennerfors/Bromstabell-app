@@ -1,7 +1,7 @@
 import streamlit as st
 
 # ==============================================================================
-# STEG 1: DATADEFINITIONER
+# DATA (Samma som tidigare)
 # ==============================================================================
 
 # Data för svenska tabeller (A, B, C, E, EM)
@@ -44,6 +44,26 @@ HASTIGHETS_DATA = {
         (621, 670): [ (0, 60, 60), (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 116, 100), (117, 141, 110), (142, -1, 120)],
         (671, 710): [ (0, 60, 40), (61, 62, 50), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, -1, 100)],
         (711, 750): [ (0, 64, 40), (65, 65, 50), (66, 66, 60), (67, 68, 70), (69, 82, 80), (83, 87, 90), (88, 90, 100), (91, -1, 110)]
+    },
+    'D': {
+        (0, 100):   [ (0, 28, 0), (29, 30, 40), (31, 32, 50), (33, 35, 60), (36, 38, 70), (39, 41, 80), (42, 44, 90), (45, 48, 100), (49, 52, 110), (53, 56, 120), (57, 60, 130), (61, 64, 140), (65, -1, 150) ],
+        (101, 200): [ (0, 28, 0), (29, 30, 40), (31, 32, 50), (33, 35, 60), (36, 38, 70), (39, 41, 80), (42, 44, 90), (45, 48, 100), (49, 53, 110), (54, 57, 120), (58, 61, 130), (62, 66, 140), (67, -1, 150) ],
+        (201, 300): [ (0, 28, 0), (29, 30, 40), (31, 32, 50), (33, 35, 60), (36, 38, 70), (39, 41, 80), (42, 45, 90), (46, 49, 100), (50, 54, 110), (55, 59, 120), (60, 63, 130), (64, 68, 140), (69, -1, 150) ],
+        (301, 400): [ (0, 28, 0), (29, 30, 40), (31, 33, 50), (34, 36, 60), (37, 39, 70), (40, 42, 80), (43, 46, 90), (47, 50, 100), (51, 55, 110), (56, 60, 120), (61, 65, 130), (66, -1, 140) ],
+        (401, 500): [ (0, 28, 0), (29, 31, 40), (32, 34, 50), (35, 37, 60), (38, 40, 70), (41, 43, 80), (44, 47, 90), (48, 51, 100), (52, 56, 110), (57, 61, 120), (62, 66, 130), (67, -1, 140) ],
+        (501, 600): [ (0, 28, 0), (29, 31, 40), (32, 34, 50), (35, 38, 60), (39, 41, 70), (42, 45, 80), (46, 49, 90), (50, 54, 100), (55, 59, 110), (60, 64, 120), (65, -1, 130) ],
+        (601, 700): [ (0, 28, 0), (29, 32, 40), (33, 35, 50), (36, 39, 60), (40, 42, 70), (43, 46, 80), (47, 50, 90), (51, 55, 100), (56, 60, 110), (61, -1, 120) ],
+        (701, 850): [ (0, 28, 0), (29, 33, 40), (34, 37, 50), (38, 41, 60), (42, 44, 70), (45, 48, 80), (49, 52, 90), (53, 57, 100), (58, -1, 110) ]
+    },
+    'D+': {
+        (0, 100):   [ (0, 35, 0), (36, 38, 120), (39, 41, 130), (42, 44, 140), (45, 48, 150), (49, 52, 160), (53, 56, 170), (57, 60, 180), (61, -1, 190) ],
+        (101, 200): [ (0, 35, 0), (36, 38, 120), (39, 41, 130), (42, 45, 140), (46, 49, 150), (50, 53, 160), (54, 57, 170), (58, 61, 180), (62, -1, 190) ],
+        (201, 300): [ (0, 35, 0), (36, 39, 120), (40, 42, 130), (43, 46, 140), (47, 50, 150), (51, 54, 160), (55, 58, 170), (59, 63, 180), (64, -1, 190) ],
+        (301, 400): [ (0, 35, 0), (36, 40, 120), (41, 43, 130), (44, 47, 140), (48, 51, 150), (52, 55, 160), (56, 60, 170), (61, -1, 180) ],
+        (401, 500): [ (0, 35, 0), (36, 41, 120), (42, 44, 130), (45, 48, 140), (49, 52, 150), (53, 57, 160), (58, -1, 170) ],
+        (501, 600): [ (0, 35, 0), (36, 42, 120), (43, 45, 130), (46, 49, 140), (50, 54, 150), (55, -1, 160) ],
+        (601, 700): [ (0, 35, 0), (36, 43, 120), (44, 47, 130), (48, 51, 140), (52, -1, 150) ],
+        (701, 850): [ (0, 35, 0), (36, 45, 120), (46, 49, 130), (50, -1, 140) ]
     },
     'E': {
         (0, 100): [ (0, 57, 40), (58, 61, 50), (62, 66, 60), (67, 70, 70), (71, 75, 80), (76, 80, 90), (81, 85, 100), (86, 90, 110), (91, 95, 120), (96, -1, 130)],
@@ -111,6 +131,7 @@ BREMSETABELL_1 = {
     50: {15: 55, 20: 58, 25: 63, 30: 67, 35: 72, 40: 78},
     55: {15: 64, 20: 67, 25: 70, 30: 77}
 }
+
 # Data för Bremsetabell II
 BREMSETABELL_2 = {
     0: {15: 5, 20: 5, 25: 6, 30: 5, 35: 5, 40: 7, 45: 10, 50: 13, 55: 18, 60: 23, 65: 29, 70: 36, 75: 45, 80: 55},
@@ -143,7 +164,8 @@ BREMSETABELL_2 = {
     50: {15: 55, 20: 59, 25: 63, 30: 70, 35: 78},
     55: {20: 67, 25: 71, 30: 77, 35: 84}
 }
-# Data för Bremsetabell III
+
+# KORRIGERAD DATA FÖR BREMSETABELL III (från användaren)
 BREMSETABELL_3 = {
     0: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 20, 70: 20, 75: 24, 80: 28, 85: 33, 90: 38, 95: 43, 100: 49, 105: 55, 110: 61, 115: 68, 120: 75},
     1: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 22, 70: 22, 75: 26, 80: 30, 85: 35, 90: 39, 95: 45, 100: 51, 105: 57, 110: 63, 115: 70, 120: 77},
@@ -193,13 +215,11 @@ NORSKA_TABELLER = {
     "IV": BREMSETABELL_4
 }
 
+
 # ==============================================================================
-# STEG 2: LOGIK OCH FUNKTIONER
+# LOGIK OCH FUNKTIONER
 # ==============================================================================
 
-# ----------------------------------------------------
-# Sökfunktion för Hastighetskollen
-# ----------------------------------------------------
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
     if bana not in HASTIGHETS_DATA:
         return "Okänd bana vald."
@@ -217,59 +237,61 @@ def hitta_max_hastighet(bana, tåglängd, bromsprocent):
             return hastighet
     return "Ingen hastighet hittades för angiven bromsprocent."
 
-# --- NYA FUNKTIONER FÖR NORGE ---
-
 def sök_i_enkel_bremsetabell(tabell_data, fall, bromsprocent, tabell_namn):
-    """Söker i en enskild norsk bremsetabell och returnerar hastigheten."""
-    
-    # Hantera specialregeln för fall 1-3 ‰ för tabell II, III och IV
     aktuellt_fall = fall
     if tabell_namn in ["II", "III", "IV"] and 1 <= fall <= 3:
         aktuellt_fall = 4
-        
     if aktuellt_fall not in tabell_data:
         return f"Fall {fall}‰ ej funnet"
-
     hastighetsdata_for_fall = tabell_data[aktuellt_fall]
     sorterade_hastigheter = sorted(hastighetsdata_for_fall.keys(), reverse=True)
-    
     for hastighet in sorterade_hastigheter:
         erforderlig_bremseprosent = hastighetsdata_for_fall[hastighet]
         if bromsprocent >= erforderlig_bremseprosent:
             return hastighet
-            
     return "För låg broms"
 
 def hitta_norska_hastigheter(fall, bromsprocent):
-    """Söker igenom alla norska tabeller och returnerar en dictionary med resultat."""
     resultat_per_tabell = {}
     for namn, data in NORSKA_TABELLER.items():
         resultat = sök_i_enkel_bremsetabell(data, fall, bromsprocent, namn)
         resultat_per_tabell[f"Tabell {namn}"] = resultat
     return resultat_per_tabell
 
-## ==============================================================================
-# STEG 3: WEBBAPPLIKATION MED STREAMLIT
+
+# ==============================================================================
+# STREAMLIT-APPLIKATION
 # ==============================================================================
 
-st.set_page_config(page_title="Bromsprocenttabeller", page_icon="🚂", layout="wide")
+# Initiera session state för navigering
+if 'page' not in st.session_state:
+    st.session_state.page = 'main'
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    try:
-        st.image("OnRail.png", width=300)
-    except Exception:
-        st.write(" ") 
+def go_to_main():
+    st.session_state.page = 'main'
+def go_to_svenska():
+    st.session_state.page = 'svenska'
+def go_to_norska():
+    st.session_state.page = 'norska'
 
-st.title('🚂 Bromsprocenttabeller')
-st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från svenska och norska tabeller.")
+# Funktion för att rita upp huvudsidan
+def render_main_page():
+    st.markdown("<h1 style='text-align: center;'>🚂 Bromsprocenttabeller</h1>", unsafe_allow_html=True)
+    st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från svenska och norska tabeller.")
+    
+    st.markdown('<h3 style="text-align: center;">Välj tabell</h3>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.button("Svenska Bromsprocenttabellen", on_click=go_to_svenska, use_container_width=True)
+    with col2:
+        st.button("Norsk Bremsetabeller", on_click=go_to_norska, use_container_width=True)
+    st.markdown("<h6 style='text-align: center;'>Om ni hittar fel eller vill tipsa mig, skicka ett mail till: <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
+    unsafe_allow_html=True)   
 
-tab1, tab2 = st.tabs(["Bromsprocenttabeller (Sverige)", "Bremsetabeller (Norge)"])
-
-# ----------------------------------------------------
-# Flik 1: Svenska tabeller
-# ----------------------------------------------------
-with tab1:
+# Funktion för att rita upp svenska sidan
+def render_svenska_page():
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.header("Svenska Bromsprocenttabellen")
     st.write("Ange tåglängd och bromsprocent för att se högsta tillåtna hastighet på **samtliga** svenska bandelar.")
     
@@ -297,96 +319,86 @@ with tab1:
         )
 
     if st.button('Hitta högsta tillåtna hastighet', key='button_tab1'):
-        # Samma beräkning som tidigare
         hastighets_resultat = {}
         for bana in HASTIGHETS_DATA.keys():
             resultat = hitta_max_hastighet(bana, tåglängd_inmatad, bromsprocent_inmatad_tab1)
             hastighets_resultat[bana] = resultat
-
-        # --- NY SAMMANFATTNINGSDEL ---
+        
         st.subheader("Sammanfattning")
         
-        giltiga_hastigheter = [h for h in hastighets_resultat.values() if isinstance(h, int)]
+        giltiga_resultat = {
+            bana: hastighet
+            for bana, hastighet in hastighets_resultat.items()
+            if isinstance(hastighet, int)
+        }
         
-        if giltiga_hastigheter:
-            min_hastighet = min(giltiga_hastigheter)
+        if giltiga_resultat:
+            bana_med_lagst_hastighet = min(giltiga_resultat, key=giltiga_resultat.get)
+            lagsta_hastighet = giltiga_resultat[bana_med_lagst_hastighet]
+            
             st.metric(
-                label="LÄGSTA HASTIGHET",
-                value=f"{min_hastighet} km/h"
+                label=f"LÄGSTA GÄLLANDE HASTIGHET (FRÅN BANA {bana_med_lagst_hastighet})",
+                value=f"{lagsta_hastighet} km/h"
             )
-            st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den lägsta hastigheten.")
+            st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den hastighet som är tillåten på samtliga bandelar.")
         else:
             st.warning("Inga giltiga hastigheter kunde beräknas för angivna värden.")
 
         st.divider()
         
-        # --- DETALJERAD VY (som tidigare) ---
+        # --- NY, UPPDELAD RESULTATVY ---
         st.subheader("Detaljerat resultat per bana")
-        cols = st.columns(len(hastighets_resultat))
-        for i, (bana, hastighet) in enumerate(hastighets_resultat.items()):
-            with cols[i]:
-                if isinstance(hastighet, int):
-                    st.metric(label=f"Bana {bana}", value=f"{hastighet} km/h")
-                else:
-                    st.metric(label=f"Bana {bana}", value="-")
-                    st.caption(hastighet) 
+        
+        KOLUMNER_PER_RAD = 4
+        items = list(hastighets_resultat.items())
+
+        # Loopa igenom resultaten i block om 4
+        for i in range(0, len(items), KOLUMNER_PER_RAD):
+            chunk = items[i:i + KOLUMNER_PER_RAD]
+            
+            # Skapa en ny rad med kolumner
+            cols = st.columns(KOLUMNER_PER_RAD)
+            
+            # Fyll varje kolumn i raden
+            for j, (bana, hastighet) in enumerate(chunk):
+                with cols[j]:
+                    if isinstance(hastighet, int):
+                        st.metric(label=f"Bana {bana}", value=f"{hastighet} km/h")
+                    else:
+                        st.metric(label=f"Bana {bana}", value="-")
+                        st.caption(hastighet)
 
     st.info("Observera: Data är tolkad från Bromstabeller A,B,C,E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
 
-# ----------------------------------------------------
-# Flik 2: Norska tabeller (OMBYGGD)
-# ----------------------------------------------------
-with tab2:
-    st.header("Norska Bremsetabeller (I, II, III, IV)")
-    st.write("Ange bestämmande fall och bromsprocent för att se tillåten hastighet enligt varje tabell.")
+# Funktion för att rita upp norska sidan
+def render_norska_page():
+    st.button("⬅️ Tilbake til hovedmenyen", on_click=go_to_main)
+    st.header("Norsk Bremsetabeller (I, II, III, IV)")
+    st.write("Skriv inn det avgjørende tilfellet og bremseprosenten for å se tillatt hastighet i henhold til hver tabell..")
     
     col1_tab2, col2_tab2 = st.columns(2)
     with col1_tab2:
         fall_inmatad = st.number_input(
-            'Ange bestämmande fall (‰):', min_value=0, value=10, step=1,
+            'Spesifiser det avgjørende tilfellet (‰):', min_value=0, value=10, step=1,
             help="Ange den största medellutningen i promille."
         )
     with col2_tab2:
         bremseprosent_inmatad_tab2 = st.number_input(
-            'Ange tillgänglig bromsprocent (%):', min_value=0, max_value=200, value=100, step=1,
+            'Angi tilgjengelig bremseprosent (%):', min_value=0, max_value=200, value=100, step=1,
             key='broms_tab2'
         )
 
     if st.button('Beräkna hastighet', key='button_tab2'):
-        # Anropa den nya huvudfunktionen för norska tabeller
         resultat_per_tabell = hitta_norska_hastigheter(fall_inmatad, bremseprosent_inmatad_tab2)
 
-        st.subheader("Sammanfattning")
-        
-        # Hitta den lägsta giltiga hastigheten och från vilken tabell den kom
-        giltiga_hastigheter = {
-            tabell: hastighet 
-            for tabell, hastighet in resultat_per_tabell.items() 
-            if isinstance(hastighet, int)
-        }
-        
-        if giltiga_hastigheter:
-            lagsta_hastighet_tabell = min(giltiga_hastigheter, key=giltiga_hastigheter.get)
-            lagsta_hastighet_varde = giltiga_hastigheter[lagsta_hastighet_tabell]
-            
-            st.metric(
-                label=f"LÄGSTA GÄLLANDE HASTIGHET (från {lagsta_hastighet_tabell})",
-                value=f"{lagsta_hastighet_varde} km/h"
-            )
-            st.success("Detta är den mest restriktiva hastigheten.")
-        else:
-            st.warning("Ingen giltig hastighet kunde beräknas från någon av tabellerna med angivna värden.")
+        st.subheader("Resultat per tabell")
+        st.info(f"Resultat för bestämmande fall {fall_inmatad}‰ och {bremseprosent_inmatad_tab2}% broms.")
 
-        st.divider()
-        st.subheader("Detaljerat resultat per tabell")
-
-        # Skapa 4 kolumner för detaljerna
         cols = st.columns(4)
         for i, (tabell_namn, hastighet) in enumerate(resultat_per_tabell.items()):
             with cols[i]:
                 if isinstance(hastighet, int):
                     st.metric(label=tabell_namn, value=f"{hastighet} km/h")
-                    # Lägg till notis om specialregeln använts
                     if tabell_namn in ["Tabell II", "Tabell III", "Tabell IV"] and 1 <= fall_inmatad <= 3:
                         st.caption(f"Använder data för 4‰")
                 else:
@@ -394,6 +406,14 @@ with tab2:
                     st.caption(hastighet)
     
     st.info("""
-    **Observera:** * Data är tolkad från Bremsetabell I, II, III och IV. Dubbelkolla alltid mot officiella källor.
-    * För tabell II, III och IV används data för 4‰ fall om det angivna fallet är 1, 2 eller 3‰.
+    **Merk:** * Dataene er tolket fra bremsetabellene I, II, III og IV. Dobbeltsjekk alltid mot offisielle kilder.
+* For tabell II, III og IV brukes data for 4‰-tilfeller hvis det spesifiserte tilfellet er 1, 2 eller 3‰.
     """)
+
+# Huvud-router för appen
+if st.session_state.page == 'main':
+    render_main_page()
+elif st.session_state.page == 'svenska':
+    render_svenska_page()
+elif st.session_state.page == 'norska':
+    render_norska_page()
