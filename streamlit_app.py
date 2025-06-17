@@ -292,8 +292,7 @@ def render_main_page():
 # Funktion för att rita upp svenska sidan
 def render_svenska_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
-    st.markdown("<h2 style='text-align: center;'>Svenska Bromsprocenttabellen</h2>", unsafe_allow_html=True)
-    st.markdown("🇸🇪") 
+    st.header("Svenska Bromsprocenttabellen")
     st.write("Ange tåglängd och bromsprocent för att se högsta tillåtna hastighet på **samtliga** svenska bandelar.")
     
     @st.dialog("Översiktskarta")
@@ -389,11 +388,11 @@ def render_norska_page():
             key='broms_tab2'
         )
 
-    if st.button('Beregn hastighet', key='button_tab2'):
+    if st.button('Beräkna hastighet', key='button_tab2'):
         resultat_per_tabell = hitta_norska_hastigheter(fall_inmatad, bremseprosent_inmatad_tab2)
 
-        st.subheader("Resultater per tabell")
-        st.info(f"Resultater til bestemmende fall {fall_inmatad}‰ och {bremseprosent_inmatad_tab2}% bremse.")
+        st.subheader("Resultat per tabell")
+        st.info(f"Resultat för bestämmande fall {fall_inmatad}‰ och {bremseprosent_inmatad_tab2}% broms.")
 
         cols = st.columns(4)
         for i, (tabell_namn, hastighet) in enumerate(resultat_per_tabell.items()):
