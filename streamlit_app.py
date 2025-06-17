@@ -340,7 +340,7 @@ def render_svenska_page():
                 label=f"LÄGSTA GÄLLANDE HASTIGHET (FRÅN BANA {bana_med_lagst_hastighet})",
                 value=f"{lagsta_hastighet} km/h"
             )
-            st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den hastighet som är tillåten på samtliga bandelar.")
+            st.success(f"För ett tåg på {tåglängd_inmatad}m med {bromsprocent_inmatad_tab1}% broms är detta den mest restriktiva hastighet.")
         else:
             st.warning("Inga giltiga hastigheter kunde beräknas för angivna värden.")
 
