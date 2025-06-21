@@ -1,10 +1,14 @@
 import streamlit as st
+import yaml
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
+import pandas as pd
+import pdfplumber
+import re
 
 # ==============================================================================
-# DATA (Samma som tidigare)
+# DATADEFINITIONER (Oförändrad)
 # ==============================================================================
-
-# Data för svenska tabeller (A, B, C, E, EM)
 HASTIGHETS_DATA = {
     'A': {
         (0, 100): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 138, 130), (139, 143, 140), (144, -1, 150)],
@@ -164,8 +168,7 @@ BREMSETABELL_2 = {
     50: {15: 55, 20: 59, 25: 63, 30: 70, 35: 78},
     55: {20: 67, 25: 71, 30: 77, 35: 84}
 }
-
-# KORRIGERAD DATA FÖR BREMSETABELL III (från användaren)
+# Data för Bremsetabell III
 BREMSETABELL_3 = {
     0: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 20, 70: 20, 75: 24, 80: 28, 85: 33, 90: 38, 95: 43, 100: 49, 105: 55, 110: 61, 115: 68, 120: 75},
     1: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 20, 60: 20, 65: 22, 70: 22, 75: 26, 80: 30, 85: 35, 90: 39, 95: 45, 100: 51, 105: 57, 110: 63, 115: 70, 120: 77},
@@ -178,7 +181,7 @@ BREMSETABELL_3 = {
     8: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 20, 55: 23, 60: 27, 65: 31, 70: 34, 75: 38, 80: 43, 85: 48, 90: 53, 95: 59, 100: 65, 105: 71, 110: 78, 115: 85, 120: 92},
     10: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 20, 50: 22, 55: 25, 60: 29, 65: 33, 70: 37, 75: 42, 80: 46, 85: 52, 90: 57, 95: 63, 100: 69, 105: 75, 110: 81, 115: 88, 120: 96},
     12: {20: 20, 25: 20, 30: 20, 35: 20, 40: 20, 45: 23, 50: 26, 55: 29, 60: 33, 65: 36, 70: 41, 75: 45, 80: 50, 85: 55, 90: 60, 95: 66, 100: 72, 105: 78, 110: 85, 115: 92, 120: 99},
-    14: {20: 20, 25: 20, 30: 20, 35: 20, 40: 21, 45: 24, 50: 27, 55: 30, 60: 34, 65: 39, 70: 44, 75: 49, 80: 53, 85: 58, 90: 64, 95: 59, 100: 75, 105: 82, 110: 88, 115: 95, 120: 102},
+    14: {20: 20, 25: 20, 30: 20, 35: 20, 40: 21, 45: 24, 50: 27, 55: 30, 60: 34, 65: 39, 70: 44, 75: 49, 80: 53, 85: 58, 90: 64, 95: 69, 100: 75, 105: 82, 110: 88, 115: 95, 120: 102},
     16: {20: 20, 25: 21, 30: 23, 35: 25, 40: 27, 45: 30, 50: 33, 55: 36, 60: 39, 65: 43, 70: 47, 75: 52, 80: 57, 85: 62, 90: 67, 95: 73, 100: 79, 105: 85, 110: 92, 115: 99, 120: 106},
     18: {20: 23, 25: 25, 30: 26, 35: 28, 40: 31, 45: 33, 50: 36, 55: 39, 60: 43, 65: 47, 70: 51, 75: 55, 80: 60, 85: 65, 90: 71, 95: 76, 100: 82, 105: 89, 110: 95, 115: 102, 120: 109},
     20: {20: 27, 25: 28, 30: 30, 35: 32, 40: 34, 45: 37, 50: 40, 55: 43, 60: 46, 65: 50, 70: 54, 75: 59, 80: 64, 85: 69, 90: 74, 95: 80, 100: 86, 105: 92, 110: 99, 115: 105, 120: 113},
@@ -193,18 +196,18 @@ BREMSETABELL_4 = {
     2: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 20, 110: 26, 120: 32},
     3: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 22, 110: 27, 120: 33},
     4: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 23, 110: 28, 120: 35},
-    5: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 25, 110: 30, 120: 36},
-    6: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 26, 110: 31, 120: 38},
-    8: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 20, 100: 29, 110: 34, 120: 41},
+    5: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 25, 100: 30, 110: 36},
+    6: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 26, 100: 31, 110: 38},
+    8: {20: 20, 30: 20, 40: 20, 50: 20, 60: 20, 70: 20, 80: 20, 90: 29, 100: 34, 110: 41},
     10: {20: 20, 30: 20, 40: 20, 50: 20, 60: 21, 70: 21, 80: 22, 90: 22, 100: 32, 110: 37, 120: 44},
     12: {20: 20, 30: 21, 40: 22, 50: 22, 60: 25, 70: 25, 80: 26, 90: 26, 100: 35, 110: 40, 120: 47},
     15: {20: 28, 30: 28, 40: 29, 50: 29, 60: 31, 70: 31, 80: 32, 90: 32, 100: 39, 110: 45, 120: 52},
     18: {20: 34, 30: 34, 40: 35, 50: 35, 60: 37, 70: 37, 80: 38, 90: 38, 100: 44, 110: 50, 120: 57},
     20: {20: 39, 30: 39, 40: 40, 50: 40, 60: 41, 70: 41, 80: 42, 90: 41, 100: 47, 110: 53, 120: 60},
     22: {20: 43, 30: 43, 40: 44, 50: 44, 60: 45, 70: 45, 80: 46, 90: 45, 100: 50, 110: 56, 120: 63},
-    25: {20: 50, 30: 50, 40: 51, 50: 51, 60: 52, 70: 52, 80: 53, 90: 42, 100: 55, 110: 61, 120: 68},
-    27: {20: 54, 30: 54, 40: 55, 50: 55, 60: 56, 70: 56, 80: 57, 90: 46, 100: 58, 110: 64, 120: 71},
-    30: {20: 60, 30: 60, 40: 61, 50: 61, 60: 62, 70: 62, 80: 63, 90: 62, 100: 64, 110: 69, 120: 76},
+    25: {20: 50, 30: 50, 40: 51, 50: 51, 60: 52, 70: 52, 80: 53, 90: 55, 100: 61, 110: 68},
+    27: {20: 54, 30: 54, 40: 54, 50: 55, 60: 56, 70: 56, 80: 57, 90: 58, 100: 64, 110: 71},
+    30: {20: 60, 30: 60, 40: 61, 50: 61, 60: 62, 70: 62, 80: 63, 90: 64, 100: 69, 110: 76}
 }
 
 # Samla alla norska tabeller i en struktur
@@ -215,10 +218,10 @@ NORSKA_TABELLER = {
     "IV": BREMSETABELL_4
 }
 
-
 # ==============================================================================
 # LOGIK OCH FUNKTIONER
 # ==============================================================================
+# ... (alla funktioner är oförändrade) ...
 
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
     if bana not in HASTIGHETS_DATA:
@@ -258,12 +261,59 @@ def hitta_norska_hastigheter(fall, bromsprocent):
         resultat_per_tabell[f"Tabell {namn}"] = resultat
     return resultat_per_tabell
 
+@st.cache_data
+def load_pdf_data(file_path):
+    all_rows = []
+    try:
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                if not text: continue
+                
+                for line in text.split('\n'):
+                    km_match = re.match(r'^\s*(\d{1,3}(?:\+\d{3})?)\s', line)
+                    if km_match:
+                        km_str = km_match.group(1)
+                        info_str = line[km_match.end():].strip()
+                        
+                        km_numeric = 0.0
+                        if '+' in km_str:
+                            parts = km_str.split('+')
+                            km_numeric = float(parts[0]) + float(parts[1]) / 1000
+                        else:
+                            km_numeric = float(km_str)
+                        
+                        all_rows.append({"Km_str": km_str, "Km_numeric": km_numeric, "Information": info_str})
+    except Exception as e:
+        return f"Fel vid läsning av PDF: {e}"
+    
+    if not all_rows:
+        return "Kunde inte extrahera någon data från PDF-filen."
+
+    df = pd.DataFrame(all_rows)
+    df = df.drop_duplicates(subset=['Km_numeric']).reset_index(drop=True)
+    df = df.sort_values(by='Km_numeric').reset_index(drop=True)
+    return df
+
+def search_in_data(df, km_input):
+    if df is None or df.empty:
+        return None
+    
+    relevanta_rader = df[df['Km_numeric'] <= km_input]
+    
+    if relevanta_rader.empty:
+        return None
+    
+    return relevanta_rader.iloc[-1]
 
 # ==============================================================================
 # STREAMLIT-APPLIKATION
 # ==============================================================================
 
-# Initiera session state för navigering
+# ... (Hela UI-koden med render_main_page, render_svenska_page, etc. är oförändrad)
+# ... (Eftersom den är lång och inte ändras, utelämnas den här för läsbarhet)
+# ... (Klistra bara in den nya datan i toppen av din befintliga, fungerande fil)
+
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
 
@@ -273,23 +323,25 @@ def go_to_svenska():
     st.session_state.page = 'svenska'
 def go_to_norska():
     st.session_state.page = 'norska'
+def go_to_linjebocker():    
+    st.session_state.page = 'linjebocker'
 
-# Funktion för att rita upp huvudsidan
 def render_main_page():
-    st.markdown("<h1 style='text-align: center;'>🚂 Bromsprocenttabeller</h1>", unsafe_allow_html=True)
-    st.write("Ett verktyg för att hitta högsta tillåtna hastighet baserat på indata från svenska och norska tabeller.")
+    st.markdown("<h1 style='text-align: center;'>🚂 Tågdata</h1>", unsafe_allow_html=True)
     
-    st.markdown('<h3 style="text-align: center;">Välj tabell</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="text-align: center;">Välj verktyg</h3>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.button("Svenska Bromsprocenttabellen", on_click=go_to_svenska, use_container_width=True)
+        st.button("Svenska Bromsprocent", on_click=go_to_svenska, use_container_width=True)
     with col2:
-        st.button("Norsk Bremsetabeller", on_click=go_to_norska, use_container_width=True)
-    st.markdown("<h6 style='text-align: center;'>Om ni hittar fel eller vill tipsa mig, skicka ett mail till: <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
+        st.button("Norska Bremsetabeller", on_click=go_to_norska, use_container_width=True)
+    with col3: 
+        st.button("Linjebeskrivningar Sverige", on_click=go_to_linjebocker, use_container_width=True)  
+         
+    st.markdown("<h6 style='text-align: center; position: fixed; bottom: 10px; width: 100%;'>Utvecklad av SH. Vid fel eller förslag, maila <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
     unsafe_allow_html=True)   
 
-# Funktion för att rita upp svenska sidan
 def render_svenska_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>Svenska Bromsprocenttabellen</h1>", unsafe_allow_html=True)
@@ -297,7 +349,7 @@ def render_svenska_page():
     
     @st.dialog("Översiktskarta")
     def visa_karta_dialog():
-        st.subheader("Karta över bandelar A, B, C, E och EM")
+        st.subheader("Karta över bandelar A, B, C, D, D+, E och EM")
         try:
             st.image("Karta.png")
         except Exception:
@@ -346,20 +398,16 @@ def render_svenska_page():
 
         st.divider()
         
-        # --- NY, UPPDELAD RESULTATVY ---
         st.subheader("Detaljerat resultat per bana")
         
         KOLUMNER_PER_RAD = 4
         items = list(hastighets_resultat.items())
 
-        # Loopa igenom resultaten i block om 4
         for i in range(0, len(items), KOLUMNER_PER_RAD):
             chunk = items[i:i + KOLUMNER_PER_RAD]
             
-            # Skapa en ny rad med kolumner
             cols = st.columns(KOLUMNER_PER_RAD)
             
-            # Fyll varje kolumn i raden
             for j, (bana, hastighet) in enumerate(chunk):
                 with cols[j]:
                     if isinstance(hastighet, int):
@@ -368,29 +416,28 @@ def render_svenska_page():
                         st.metric(label=f"Bana {bana}", value="-")
                         st.caption(hastighet)
 
-    st.info("Observera: Data är tolkad från Bromstabeller A, B, C, D, D+, E & EM . Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
+    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,D, D+, E & EM. Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
 
-# Funktion för att rita upp norska sidan
 def render_norska_page():
-    st.button("⬅️ Tilbake til hovedmenyen", on_click=go_to_main)
-    st.markdown("<h1 style='text-align: center;'>Norsk Bremsetabeller (I, II, III, IV)</h1>", unsafe_allow_html=True)
-    st.write("Skriv inn det avgjørende tilfellet og bremseprosenten for å se tillatt hastighet i henhold til hver tabell..")
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.markdown("<h1 style='text-align: center;'>Norska Bremsetabeller</h1>", unsafe_allow_html=True)
+    st.write("Ange bestämmande fall och bromsprocent för att se tillåten hastighet enligt varje tabell.")
     
     col1_tab2, col2_tab2 = st.columns(2)
     with col1_tab2:
         fall_inmatad = st.number_input(
-            'Spesifiser det avgjørende tilfellet (‰):', min_value=0, value=10, step=1,
+            'Ange bestämmande fall (‰):', min_value=0, value=10, step=1,
             help="Ange den största medellutningen i promille."
         )
     with col2_tab2:
         bremseprosent_inmatad_tab2 = st.number_input(
-            'Angi tilgjengelig bremseprosent (%):', min_value=0, max_value=200, value=100, step=1,
+            'Ange tillgänglig bromsprocent (%):', min_value=0, max_value=200, value=100, step=1,
             key='broms_tab2'
         )
 
     if st.button('Beräkna hastighet', key='button_tab2'):
         resultat_per_tabell = hitta_norska_hastigheter(fall_inmatad, bremseprosent_inmatad_tab2)
-
+        
         st.subheader("Resultat per tabell")
         st.info(f"Resultat för bestämmande fall {fall_inmatad}‰ och {bremseprosent_inmatad_tab2}% broms.")
 
@@ -406,9 +453,100 @@ def render_norska_page():
                     st.caption(hastighet)
     
     st.info("""
-    **Merk:** * Dataene er tolket fra bremsetabellene I, II, III og IV. Dobbeltsjekk alltid mot offisielle kilder.
-* For tabell II, III og IV brukes data for 4‰-tilfeller hvis det spesifiserte tilfellet er 1, 2 eller 3‰.
+    **Observera:** * Data är tolkad från Bremsetabell I, II, III och IV. Dubbelkolla alltid mot officiella källor.
+    * För tabell II, III och IV används data för 4‰ fall om det angivna fallet är 1, 2 eller 3‰.
     """)
+
+def render_linjebocker_page():
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.header("Sök i Linjebeskrivning")
+
+    linjebocker = {
+        "Katrineholm - Laxå - Hallsberg - Skövde": "007_katrineholms_central_till_skovde_central_250601.pdf",
+        "Skövde - Hallsberg - Laxå - Katrineholm": "045_skovde_central_till_katrineholms_central_250601.pdf",
+        "Laxå - Kil - Charlottenberg": "083_laxa_till_charlottenberg_250601.pdf",
+        "Charlottenberg - Kil - Laxå": "111_charlottenberg_till_laxa_250601.pdf",
+        "Ljusdal - Storvik - Avesta Krylbo - Frövi ": "115_ljusdal_till_frovi.pdf",
+        "Frövi - Avesta Krylbo - Storvik - Ljusdal": "167_frovi_till_ljusdal.pdf",
+        "Kil - Ställdalen": "365_kil_till_stalldalen_250601.pdf",
+        "Ställdalen - Kil": "345_stalldalen_till_kil_250601.pdf",
+        "Frövi - Borlänge": "209_frovi_till_domnarvet_250601.pdf",
+        "Borlänge - Frövi": "181_domnarvet_till_frovi_250601.pdf",
+        "Hallsberg - Frövi": "161_hallsbergs_rangerbangard_till_frovi_250601.pdf",
+        "Frövi - Hallsberg": "141_frovi_till_hallsbergs_rangerbangard_250601.pdf",
+        "Borlänge - Storvik": "315_borlange_central_till_fliskar_250601.pdf",
+        "Storvik - Borlänge": "283_fliskar_till_borlange_central_250601.pdf",
+        "Ånge - Ljusdal": "095_ange_till_ljusdal_250601.pdf",
+        "Ljusdal - Ånge": "117_ljusdal_till_ange_250601.pdf",
+        "Ånge - Vännäs": "045_ange_till_vannas_250601.pdf",
+        "Vännäs - Ånge": "005_vannas_till_ange_250601.pdf",
+        "Ånge - Sundsvall": "139_ange_till_sundsvalls_central_250601.pdf",
+        "Sundsvall - Ånge": "161_sundsvalls_central_till_ange_250601.pdf",
+        "Sundsvall - Gimonäs E2": "321_sundsvalls_central_till_gimonas_250601.pdf",
+        "Gimonäs - Sundsvall E2": "267_gimonas_till_sundsvalls_central_250601.pdf",
+        "Bjørnfjell - Boden - Luleå": "005_bjornfjell_till_lulea_250601.pdf",
+        "Luleå - Boden - Bjørnfjell": "071_lulea_till_bjornfjell_250601.pdf",
+        "Boden Central - Vännäs": "265_bodens_central_till_vannas_250505.pdf",
+        "Vännäs - Boden Central": "301_vannas_till_bodens_central_250505.pdf",
+    }
+    
+    vald_linjebok_namn = st.selectbox("Välj linjebeskrivning:", list(linjebocker.keys()))
+    vald_fil = linjebocker[vald_linjebok_namn]
+
+    try:
+        df = load_pdf_data(vald_fil)
+        
+        if isinstance(df, str):
+            st.error(df)
+        elif isinstance(df, pd.DataFrame) and not df.empty:
+            with st.expander("Visa inläst rådata från PDF för felsökning"):
+                st.dataframe(df)
+
+            search_query = st.text_input(
+                "Sök på kilometer (t.ex. 258.8) eller valfritt ord (t.ex. 'signal'):",
+                placeholder="Skriv här..."
+            )
+
+            if st.button("Sök i linjebok"):
+                if search_query:
+                    is_km_search = False
+                    try:
+                        km_value = float(search_query.replace(',', '.'))
+                        is_km_search = True
+                    except ValueError:
+                        is_km_search = False
+
+                    st.divider()
+
+                    if is_km_search:
+                        st.subheader(f"Resultat för km {km_value}")
+                        resultat_rad = search_in_data(df, km_value)
+                        if resultat_rad is not None:
+                            st.markdown(f"**Närmaste post före eller vid din position (km {resultat_rad['Km_str']}):**")
+                            st.code(resultat_rad['Information'], language=None)
+                        else:
+                            st.warning("Hittade ingen post före den angivna kilometern.")
+                    else:
+                        st.subheader(f"Resultat för sökordet '{search_query}'")
+                        results_df = df[df['Information'].str.contains(search_query, case=False, na=False, regex=False)]
+                        
+                        if not results_df.empty:
+                            st.write(f"Hittade {len(results_df)} träff(ar):")
+                            for index, row in results_df.iterrows():
+                                st.markdown(f"--- \n**Vid km:** `{row['Km_str']}`")
+                                highlighted_info = row['Information'].replace(search_query, f"**{search_query}**")
+                                st.markdown(highlighted_info)
+                        else:
+                            st.warning(f"Inga träffar för ordet '{search_query}'.")
+        elif isinstance(df, pd.DataFrame) and df.empty:
+             st.error("Kunde inte extrahera någon läsbar data från PDF-filen.")
+
+                
+    except FileNotFoundError:
+        st.error(f"FEL: Filen '{vald_fil}' kunde inte hittas. Se till att den ligger i samma mapp som appen.")
+    except Exception as e:
+        st.error(f"Ett oväntat fel inträffade: {e}")
+
 
 # Huvud-router för appen
 if st.session_state.page == 'main':
@@ -417,3 +555,5 @@ elif st.session_state.page == 'svenska':
     render_svenska_page()
 elif st.session_state.page == 'norska':
     render_norska_page()
+elif st.session_state.page == 'linjebocker':
+    render_linjebocker_page()
