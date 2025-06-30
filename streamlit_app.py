@@ -7,7 +7,7 @@ import pdfplumber
 import re
 
 # ==============================================================================
-# DATADEFINITIONER (Oförändrad)
+# DATADEFINITIONER
 # ==============================================================================
 HASTIGHETS_DATA = {
     'A': {
@@ -221,7 +221,6 @@ NORSKA_TABELLER = {
 # ==============================================================================
 # LOGIK OCH FUNKTIONER
 # ==============================================================================
-# ... (alla funktioner är oförändrade) ...
 
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
     if bana not in HASTIGHETS_DATA:
@@ -267,13 +266,33 @@ def load_pdf_data(file_path):
     try:
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
-                text = page.extract_text()
-                if not text: continue
+                # Extrahera ord med deras positioner
+                words = page.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=True)
                 
-                for line in text.split('\n'):
-                    km_match = re.match(r'^\s*(\d{1,3}(?:\+\d{3})?)\s', line)
+                # Gruppera ord i rader baserat på deras y-koordinat (top)
+                lines = {}
+                for word in words:
+                    # Använd en avrundad y-koordinat för att gruppera ord på samma rad
+                    y0 = round(word['top'], 0) 
+                    if y0 not in lines:
+                        lines[y0] = []
+                    lines[y0].append(word)
+                
+                # Sortera raderna och orden inom varje rad
+                sorted_lines = sorted(lines.items())
+                full_text_lines = []
+                for y, line_words in sorted_lines:
+                    # Sortera ord på raden från vänster till höger
+                    line_words.sort(key=lambda w: w['x0'])
+                    full_text_lines.append(" ".join(w['text'] for w in line_words))
+                
+                # Processa de återskapade textraderna
+                for line in full_text_lines:
+                    km_match = re.match(r'^\s*(\d{1,3}(?:\s*\+\s*\d{3})?)\s', line)
                     if km_match:
-                        km_str = km_match.group(1)
+                        km_str_raw = km_match.group(1)
+                        # Rensa och formatera km-strängen
+                        km_str = km_str_raw.replace(" ", "")
                         info_str = line[km_match.end():].strip()
                         
                         km_numeric = 0.0
@@ -284,18 +303,20 @@ def load_pdf_data(file_path):
                             km_numeric = float(km_str)
                         
                         all_rows.append({"Km_str": km_str, "Km_numeric": km_numeric, "Information": info_str})
+
     except Exception as e:
-        return f"Fel vid läsning av PDF: {e}"
-    
+        return f"Fel vid läsning av PDF med ny metod: {e}"
+
     if not all_rows:
         return "Kunde inte extrahera någon data från PDF-filen."
 
     df = pd.DataFrame(all_rows)
-    df = df.drop_duplicates(subset=['Km_numeric']).reset_index(drop=True)
+    df = df.drop_duplicates(subset=['Km_str']).reset_index(drop=True)
     df = df.sort_values(by='Km_numeric').reset_index(drop=True)
     return df
 
 def search_in_data(df, km_input):
+    """Söker i den processade datan och returnerar raden som är närmast före eller på den sökta kilometern."""
     if df is None or df.empty:
         return None
     
@@ -306,14 +327,12 @@ def search_in_data(df, km_input):
     
     return relevanta_rader.iloc[-1]
 
+
 # ==============================================================================
 # STREAMLIT-APPLIKATION
 # ==============================================================================
 
-# ... (Hela UI-koden med render_main_page, render_svenska_page, etc. är oförändrad)
-# ... (Eftersom den är lång och inte ändras, utelämnas den här för läsbarhet)
-# ... (Klistra bara in den nya datan i toppen av din befintliga, fungerande fil)
-
+# Initiera session state för navigering
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
 
@@ -326,6 +345,7 @@ def go_to_norska():
 def go_to_linjebocker():    
     st.session_state.page = 'linjebocker'
 
+# Funktion för att rita upp huvudsidan
 def render_main_page():
     st.markdown("<h1 style='text-align: center;'>🚂 Tågdata</h1>", unsafe_allow_html=True)
     
@@ -342,6 +362,7 @@ def render_main_page():
     st.markdown("<h6 style='text-align: center; position: fixed; bottom: 10px; width: 100%;'>Utvecklad av SH. Vid fel eller förslag, maila <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
     unsafe_allow_html=True)   
 
+# Funktion för att rita upp svenska sidan
 def render_svenska_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>Svenska Bromsprocenttabellen</h1>", unsafe_allow_html=True)
@@ -406,7 +427,7 @@ def render_svenska_page():
         for i in range(0, len(items), KOLUMNER_PER_RAD):
             chunk = items[i:i + KOLUMNER_PER_RAD]
             
-            cols = st.columns(KOLUMNER_PER_RAD)
+            cols = st.columns(len(chunk))
             
             for j, (bana, hastighet) in enumerate(chunk):
                 with cols[j]:
@@ -484,10 +505,10 @@ def render_linjebocker_page():
         "Sundsvall - Ånge": "161_sundsvalls_central_till_ange_250601.pdf",
         "Sundsvall - Gimonäs E2": "321_sundsvalls_central_till_gimonas_250601.pdf",
         "Gimonäs - Sundsvall E2": "267_gimonas_till_sundsvalls_central_250601.pdf",
-        "Bjørnfjell - Boden - Luleå": "005_bjornfjell_till_lulea_250601.pdf",
-        "Luleå - Boden - Bjørnfjell": "071_lulea_till_bjornfjell_250601.pdf",
         "Boden Central - Vännäs": "265_bodens_central_till_vannas_250505.pdf",
         "Vännäs - Boden Central": "301_vannas_till_bodens_central_250505.pdf",
+        "Björnfjell - Boden - Luleå": "bjornfjell_till_lulea_250601.pdf",
+        "Luleå - Boden - Björnfjell": "lulea_till_bjornfjell_250601.pdf",
     }
     
     vald_linjebok_namn = st.selectbox("Välj linjebeskrivning:", list(linjebocker.keys()))
@@ -503,13 +524,14 @@ def render_linjebocker_page():
                 st.dataframe(df)
 
             search_query = st.text_input(
-                "Sök på kilometer (t.ex. 258.8) eller valfritt ord (t.ex. 'signal'):",
+                "Sök på kilometer (t.ex. 258 eller 258.1) eller ord (t.ex. 'signal'):",
                 placeholder="Skriv här..."
             )
 
             if st.button("Sök i linjebok"):
                 if search_query:
                     is_km_search = False
+                    km_value = 0.0
                     try:
                         km_value = float(search_query.replace(',', '.'))
                         is_km_search = True
@@ -519,13 +541,30 @@ def render_linjebocker_page():
                     st.divider()
 
                     if is_km_search:
-                        st.subheader(f"Resultat för km {km_value}")
-                        resultat_rad = search_in_data(df, km_value)
-                        if resultat_rad is not None:
-                            st.markdown(f"**Närmaste post före eller vid din position (km {resultat_rad['Km_str']}):**")
-                            st.code(resultat_rad['Information'], language=None)
+                        # Heltals-sökning: Sök inom en hel kilometer
+                        if km_value == int(km_value):
+                            start_km = int(km_value)
+                            end_km = start_km + 0.999
+                            st.subheader(f"Resultat för kilometer {start_km}")
+                            results_df = df[(df['Km_numeric'] >= start_km) & (df['Km_numeric'] <= end_km)]
+                            
+                            if not results_df.empty:
+                                st.write(f"Hittade {len(results_df)} träff(ar) inom kilometer {start_km}:")
+                                for index, row in results_df.iterrows():
+                                    st.markdown(f"--- \n**Vid km:** `{row['Km_str']}`")
+                                    st.code(row['Information'], language=None)
+                            else:
+                                st.warning(f"Inga träffar för kilometer {start_km}.")
+                        # Decimal-sökning: Hitta närmaste före
                         else:
-                            st.warning("Hittade ingen post före den angivna kilometern.")
+                            st.subheader(f"Resultat för km {km_value}")
+                            resultat_rad = search_in_data(df, km_value)
+                            if resultat_rad is not None:
+                                st.markdown(f"**Närmaste post före eller vid din position (km {resultat_rad['Km_str']}):**")
+                                st.code(resultat_rad['Information'], language=None)
+                            else:
+                                st.warning("Hittade ingen post före den angivna kilometern.")
+                    # Ordsökning
                     else:
                         st.subheader(f"Resultat för sökordet '{search_query}'")
                         results_df = df[df['Information'].str.contains(search_query, case=False, na=False, regex=False)]
@@ -534,8 +573,13 @@ def render_linjebocker_page():
                             st.write(f"Hittade {len(results_df)} träff(ar):")
                             for index, row in results_df.iterrows():
                                 st.markdown(f"--- \n**Vid km:** `{row['Km_str']}`")
-                                highlighted_info = row['Information'].replace(search_query, f"**{search_query}**")
-                                st.markdown(highlighted_info)
+                                # Försöker hitta sökordet och göra det bold, ignorerar skiftläge
+                                try:
+                                    pattern = re.compile(re.escape(search_query), re.IGNORECASE)
+                                    highlighted_info = pattern.sub(f"**{search_query.upper()}**", row['Information'])
+                                    st.markdown(highlighted_info, unsafe_allow_html=True)
+                                except re.error:
+                                    st.markdown(row['Information']) # Fallback
                         else:
                             st.warning(f"Inga träffar för ordet '{search_query}'.")
         elif isinstance(df, pd.DataFrame) and df.empty:
