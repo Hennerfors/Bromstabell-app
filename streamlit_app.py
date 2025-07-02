@@ -618,7 +618,6 @@ def render_linjebocker_page():
                             st.write(f"Hittade {len(results_df)} träff(ar).")
                             for index, row in results_df.iterrows():
                                 st.markdown(f"--- \n**Vid km:** `{row['Km_str']}` (Sth: {row['Sth']})")
-                                st.info(f"**Sträcka:** {row['Sträcka/System']}")
                                 st.code(row['Information'], language=None)
                         else:
                             st.warning(f"Inga träffar för kilometer {search_query}.")
