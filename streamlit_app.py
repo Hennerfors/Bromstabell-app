@@ -5,9 +5,11 @@ import streamlit_authenticator as stauth
 import pandas as pd
 import pdfplumber
 import re
+from fpdf import FPDF
+from datetime import datetime
 
 # ==============================================================================
-# DATADEFINITIONER (Dina tabeller är oförändrade)
+# DATADEFINITIONER (Oförändrade)
 # ==============================================================================
 HASTIGHETS_DATA = {
     'A': {
@@ -211,6 +213,7 @@ NORSKA_TABELLER = {
 # LOGIK OCH FUNKTIONER
 # ==============================================================================
 
+# ... (hitta_max_hastighet och andra funktioner är oförändrade) ...
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
     if bana not in HASTIGHETS_DATA:
         return "Okänd bana vald."
@@ -249,9 +252,6 @@ def hitta_norska_hastigheter(fall, bromsprocent):
         resultat_per_tabell[f"Tabell {namn}"] = resultat
     return resultat_per_tabell
 
-# ==============================================================================
-# UPPDATERAD PDF-PARSER
-# ==============================================================================
 @st.cache_data
 def load_pdf_data(file_path):
     """
@@ -260,12 +260,10 @@ def load_pdf_data(file_path):
     """
     all_rows = []
     
-    # "Tillstånd" som vi håller reda på när vi går igenom filen
     current_section = "Okänd"
     current_system = ""
     current_sth = "Okänd"
 
-    # Regex-mönster för att identifiera olika typer av rader
     km_pattern = re.compile(r"^\s*(\d{1,4}\s?\+\s?\d{1,4}(?:\s*-\s*\d{1,4}\s?\+\s?\d{1,4})?|\(\d{1,4}\+\d{1,4}\))")
     sth_pattern = re.compile(r"(\d{1,3}/\d{1,3}|\d{1,3}|Enl\s?hsi)")
     section_pattern = re.compile(r"^\((.*?)\s*-\s*(.*?)\)")
@@ -275,7 +273,6 @@ def load_pdf_data(file_path):
     try:
         with pdfplumber.open(file_path) as pdf:
             for page_num, page in enumerate(pdf.pages, 1):
-                # Använd extract_text_lines för att få rader med mer tillförlitlig ordning
                 lines = page.extract_text_lines(layout=True, strip=True)
                 
                 for line_data in lines:
@@ -284,28 +281,22 @@ def load_pdf_data(file_path):
                     if ignore_pattern.search(line):
                         continue
                     
-                    # Försök klassificera raden
                     section_match = section_pattern.search(line)
                     system_match = system_pattern.search(line)
                     km_match = km_pattern.search(line)
                     
-                    # 1. Är det en sektionsrubrik?
                     if section_match and not km_match:
                         current_section = section_match.group(0)
-                        current_system = "" # Nollställ systeminfo vid ny sektion
+                        current_system = ""
                         continue
                     
-                    # 2. Är det systeminformation?
                     if system_match and not km_match:
                         current_system += " " + line
                         current_system = current_system.strip()
                         continue
                         
-                    # Dela upp raden i potentiella kolumner.
-                    # Detta är en förenkling. X-koordinater kan ge exaktare resultat.
-                    columns = re.split(r'\s{2,}', line) # Dela vid 2+ mellanslag
+                    columns = re.split(r'\s{2,}', line)
 
-                    # 3. Är det en datarad (med Km)?
                     km_from_col = ""
                     if columns:
                         km_match_col = km_pattern.match(columns[0])
@@ -316,7 +307,6 @@ def load_pdf_data(file_path):
                         km_str = km_from_col
                         info_parts = columns[1:]
                         
-                        # Kolla om andra kolumnen är Sth
                         if len(info_parts) > 0:
                             sth_match = sth_pattern.match(info_parts[0])
                             if sth_match:
@@ -327,9 +317,7 @@ def load_pdf_data(file_path):
                         else:
                             information = ""
 
-                        # Konvertera Km till numeriskt värde för sortering
                         try:
-                            # Ta bort parenteser och hantera intervall (tar första värdet)
                             cleaned_km = km_str.replace('(', '').replace(')', '').split('-')[0]
                             if '+' in cleaned_km:
                                 parts = cleaned_km.split('+')
@@ -337,7 +325,7 @@ def load_pdf_data(file_path):
                             else:
                                 km_numeric = float(cleaned_km)
                         except (ValueError, IndexError):
-                            km_numeric = 0.0 # Fallback
+                            km_numeric = 0.0
 
                         row = {
                             "Sträcka/System": f"{current_section}.{current_system}",
@@ -349,30 +337,26 @@ def load_pdf_data(file_path):
                         }
                         all_rows.append(row)
                     
-                    # 4. Är det en fristående Sth-rad?
                     elif len(columns) == 1 and sth_pattern.fullmatch(columns[0]):
                         current_sth = columns[0]
 
-                    # 5. Om det är en oidentifierad rad, anta att det är en fortsättning på föregående rads information
                     elif all_rows:
                         all_rows[-1]["Information"] += " " + line.strip()
 
     except Exception as e:
         st.error(f"Ett fel inträffade vid läsning av PDF: {e}")
-        return pd.DataFrame() # Returnera en tom DataFrame vid fel
+        return pd.DataFrame()
 
     if not all_rows:
         return pd.DataFrame()
 
     df = pd.DataFrame(all_rows)
-    # Rensa dubbletter och sortera
     df = df.drop_duplicates().reset_index(drop=True)
     df = df.sort_values(by=['Km_numeric', 'Källa']).reset_index(drop=True)
     return df
 
 
 def search_in_data(df, km_input):
-    """Söker i den processade datan och returnerar raden som är närmast före eller på den sökta kilometern."""
     if df is None or df.empty:
         return None
     
@@ -384,41 +368,218 @@ def search_in_data(df, km_input):
     return relevanta_rader.iloc[-1]
 
 # ==============================================================================
+# NYA FUNKTIONER FÖR BLANKETTER
+# ==============================================================================
+
+def skapa_ifyllt_dokument(data):
+    """
+    Skapar en ifylld PDF baserat på användardata.
+    Använder den tomma blanketten som bakgrundsbild.
+    """
+    pdf = FPDF()
+    pdf.add_page()
+    
+    try:
+        pdf.image("blankett_21_bakgrund.png", x=0, y=0, w=210, h=297)
+    except RuntimeError:
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.set_text_color(255, 0, 0)
+        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_21_bakgrund.png' kunde inte laddas.", ln=True, align='C')
+        return bytes(pdf.output())
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(0, 0, 0)
+
+    # --- Placera ut text på exakta X, Y-koordinater (dessa måste justeras) ---
+    
+    # Grundinformation
+    pdf.text(x=167, y=30, txt=data["datum"])
+    pdf.text(x=48, y=30, txt=data["tag_spar"])
+    pdf.text(x=78, y=38, txt=data["driftplats"])
+
+    # Signaler som får passeras (separata rader för exakt kontroll)
+    # Rad 1
+    if data["signal_1_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=44.4, y=83.5, txt="X")
+    if data["signal_1_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=33.7, y=61.3, txt=data["signal_1_name"].encode('latin-1', 'replace').decode('latin-1'))
+    # Rad 2
+    if data["signal_2_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=77.4, y=83.5, txt="X")
+    if data["signal_2_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=68, y=61.3, txt=data["signal_2_name"].encode('latin-1', 'replace').decode('latin-1'))
+    # Rad 3
+    if data["signal_3_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=113.3, y=83.5, txt="X")
+    if data["signal_3_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=104.5, y=61.3, txt=data["signal_3_name"].encode('latin-1', 'replace').decode('latin-1'))
+    # Rad 4
+    if data["signal_4_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=148.3, y=83.5, txt="X") 
+    if data["signal_4_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=138.5, y=61.3, txt=data["signal_4_name"].encode('latin-1', 'replace').decode('latin-1'))
+    # Rad 5
+    if data["signal_5_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=183.8, y=83.5, txt="X")
+    if data["signal_5_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=174.5, y=61.3, txt=data["signal_5_name"].encode('latin-1', 'replace').decode('latin-1'))
+    # Rad 6
+    if data["signal_6_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=42.2, y=122.4, txt="X")
+    if data["signal_6_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=33.5, y=100, txt=data["signal_6_name"].encode('latin-1', 'replace').decode('latin-1')) 
+    # Rad 7
+    if data["signal_7_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=77.9, y=122.4, txt="X")
+    if data["signal_7_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=68, y=100, txt=data["signal_7_name"].encode('latin-1', 'replace').decode('latin-1'))   
+    # Rad 8
+    if data["signal_8_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=113.2, y=122.4, txt="X")
+    if data["signal_8_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=104.5, y=100, txt=data["signal_8_name"].encode('latin-1', 'replace').decode('latin-1'))  
+    # Rad 9
+    if data["signal_9_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=148.4, y=122.4, txt="X")
+    if data["signal_9_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=138.5, y=100, txt=data["signal_9_name"].encode('latin-1', 'replace').decode('latin-1'))  
+    # Rad 10
+    if data["signal_10_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=183.8, y=122.4, txt="X")
+    if data["signal_10_name"]:
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=174.5, y=100, txt=data["signal_10_name"].encode('latin-1', 'replace').decode('latin-1'))
+
+    # Fortsättning
+    if data["forts_fran"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.8, y=130.8, txt="X")
+    if data["forts_pa"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=109.7, y=130.8, txt="X")
+
+    # Dvärgsignaler
+    pdf.set_font("Helvetica", "", 10)
+    pdf.text(x=25.2, y=140, txt=data["vxl_dvarg_antal"])
+
+    # Stopplykta
+    pdf.set_font("Helvetica", "", 10)
+    pdf.text(x=112.4, y=140, txt=data["stopplykta_antal"])
+
+    # Växlar
+    if data["vaxlar_ratt"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=26.04, y=150.09, txt="X")
+    if data["kontrollera_vaxlar"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=84.83, y=150.4, txt="X")
+    
+    # Motväxlar
+    x_left = 55.5
+    x_right = 80.8
+    y_start = 159
+    for i in range(1, 6):
+        if data[f"motvaxel_{i}_vanster"]:
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.text(x=x_left, y=y_start + (i-1)*6.2, txt="X")
+        if data[f"motvaxel_{i}_hoger"]:
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.text(x=x_right, y=y_start + (i-1)*6.2, txt="X")
+    
+    x_left_2 = 144.8
+    x_right_2 = 170.5
+    for i in range(6, 11):
+        if data[f"motvaxel_{i}_vanster"]:
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.text(x=x_left_2, y=y_start + (i-6)*6.2, txt="X")
+        if data[f"motvaxel_{i}_hoger"]:
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.text(x=x_right_2, y=y_start + (i-6)*6.2, txt="X")
+
+    # Särskilda villkor
+    if data["villkor_tsm"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.83, y=190.5, txt="X")
+    if data["hinder_fardvag"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.19, y=199.42, txt="X")
+    if data["samtliga_mbsisparr"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.4, y=209, txt="X")
+    if data["hinder_skydd"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=83.62, y=199.6, txt="X")
+    if data["ankomst_checked"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.19, y=219.31, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=80, y=218, txt=data["ankomst_plats"].encode('latin-1', 'replace').decode('latin-1'))
+
+    if data["brosignal"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.83, y=230.32, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=45.09, y=229, txt=data["brosignal_name"].encode('latin-1', 'replace').decode('latin-1'))
+    if data["skredvarning"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=109.66, y=230.32, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=151.15, y=229, txt=data["skrevrvarning_name"].encode('latin-1', 'replace').decode('latin-1'))
+
+    # System M
+    pdf.set_font("Helvetica", "", 10)
+    pdf.text(x=71.55, y=244, txt=data["system_m_plats"].encode('latin-1', 'replace').decode('latin-1'))
+    if data["system_m_foljande"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=75.15, y=253.3, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=119.18, y=252, txt=data["system_m_passera"].encode('latin-1', 'replace').decode('latin-1'))
+    if data["system_m_alla"]:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=25.3, y=253.60, txt="X")
+
+    
+    
+    # Footer-information
+    pdf.set_font("Helvetica", "", 10)
+    pdf.text(x=55, y=268, txt=data["tillstandsnummer"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=128, y=268, txt=data["klockslag"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=26, y=281.5, txt=data["dp_fjbc"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=46, y=281.5, txt=data["tkl_namn"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=117, y=281.5, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
+
+    return bytes(pdf.output())
+
+# ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
 # ==============================================================================
 
-# Initiera session state för navigering
 if 'page' not in st.session_state:
     st.session_state.page = 'main'
 
-def go_to_main():
-    st.session_state.page = 'main'
-def go_to_svenska():
-    st.session_state.page = 'svenska'
-def go_to_norska():
-    st.session_state.page = 'norska'
-def go_to_linjebocker():
-    st.session_state.page = 'linjebocker'
+def go_to_main(): st.session_state.page = 'main'
+def go_to_svenska(): st.session_state.page = 'svenska'
+def go_to_norska(): st.session_state.page = 'norska'
+def go_to_linjebocker(): st.session_state.page = 'linjebocker'
+def go_to_blanketter_menu(): st.session_state.page = 'blanketter_menu'
+def go_to_blankett_21(): st.session_state.page = 'blankett_21'
 
-# Funktion för att rita upp huvudsidan
 def render_main_page():
     st.markdown("<h1 style='text-align: center;'>🚂 Tågdata</h1>", unsafe_allow_html=True)
-    
     st.markdown('<h3 style="text-align: center;">Välj verktyg</h3>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.button("Svenska Bromsprocent", on_click=go_to_svenska, use_container_width=True)
+        st.button("Bromsprocent Sverige", on_click=go_to_svenska, use_container_width=True)
     with col2:
-        st.button("Norska Bremsetabeller", on_click=go_to_norska, use_container_width=True)
+        st.button("Bremsetabeller Norge", on_click=go_to_norska, use_container_width=True)
     with col3: 
-        st.button("Linjebeskrivningar Sverige", on_click=go_to_linjebocker, use_container_width=True)
+        st.button("Linjebeskrivningar", on_click=go_to_linjebocker, use_container_width=True)
+    with col4:
+        st.button("Blanketter Sverige", on_click=go_to_blanketter_menu, use_container_width=True)
         
     st.markdown("<h6 style='text-align: center; position: fixed; bottom: 10px; width: 100%;'>Utvecklad av SH. Vid fel eller förslag, maila <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
     unsafe_allow_html=True)
 
-# Funktion för att rita upp svenska sidan
 def render_svenska_page():
+    # ... (Denna funktion är oförändrad) ...
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>Svenska Bromsprocenttabellen</h1>", unsafe_allow_html=True)
     st.write("Ange tåglängd och bromsprocent för att se högsta tillåtna hastighet på **samtliga** svenska bandelar.")
@@ -495,6 +656,7 @@ def render_svenska_page():
     st.info("Observera: Data är tolkad från Bromstabeller A,B,C,D, D+, E & EM. Dubbelkolla alltid mot officiella källor vid faktisk operativ användning.")
 
 def render_norska_page():
+    # ... (Denna funktion är oförändrad) ...
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>Norska Bremsetabeller</h1>", unsafe_allow_html=True)
     st.write("Ange bestämmande fall och bromsprocent för att se tillåten hastighet enligt varje tabell.")
@@ -533,14 +695,10 @@ def render_norska_page():
     * För tabell II, III och IV används data för 4‰ fall om det angivna fallet är 1, 2 eller 3‰.
     """)
 
-# ==============================================================================
-# UPPDATERAD FUNKTION FÖR LINJEBOK-SIDAN
-# ==============================================================================
 def render_linjebocker_page():
+    # ... (Denna funktion är oförändrad) ...
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.header("Sök i Linjebeskrivning")
-
-    # Din dictionary med linjeböcker är oförändrad
     linjebocker = {
         "Katrineholm - Laxå - Hallsberg - Skövde": "007_katrineholms_central_till_skovde_central_250601.pdf",
         "Skövde - Hallsberg - Laxå - Katrineholm": "045_skovde_central_till_katrineholms_central_250601.pdf",
@@ -566,7 +724,6 @@ def render_linjebocker_page():
         "Gimonäs - Sundsvall E2": "267_gimonas_till_sundsvalls_central_250601.pdf",
         "Boden Central - Vännäs": "265_bodens_central_till_vannas_250505.pdf",
         "Vännäs - Boden Central": "301_vannas_till_bodens_central_250505.pdf",
-        # Namn på de problematiska filerna kan ändras här för att vara mer användarvänliga
         "Luleå - Björnfjell": "071_lulea_till_bjornfjell_250601.pdf",
         "Björnfjell - Luleå": "005_bjornfjell_till_lulea_250601.pdf",
     }
@@ -599,29 +756,26 @@ def render_linjebocker_page():
                     st.divider()
 
                     if is_km_search:
-                        # Heltals-sökning
                         if km_value == int(km_value):
                             start_km = int(km_value)
                             end_km = start_km + 0.999
                             st.subheader(f"Resultat för kilometer {start_km}")
                             results_df = df[(df['Km_numeric'] >= start_km) & (df['Km_numeric'] <= end_km)]
-                        # Decimal-sökning
                         else:
                             st.subheader(f"Resultat för km {km_value}")
-                            results_df = pd.DataFrame() # Tömmer för att undvika dubbla resultat
+                            results_df = pd.DataFrame()
                             närmaste_rad = search_in_data(df, km_value)
                             if närmaste_rad is not None:
-                                # Skapa en ny DataFrame för att kunna visa den på samma sätt
                                 results_df = pd.DataFrame([närmaste_rad])
                         
                         if not results_df.empty:
                             st.write(f"Hittade {len(results_df)} träff(ar).")
                             for index, row in results_df.iterrows():
                                 st.markdown(f"--- \n**Vid km:** `{row['Km_str']}` (Sth: {row['Sth']})")
+                                st.info(f"**Sträcka:** {row['Sträcka/System']}")
                                 st.code(row['Information'], language=None)
                         else:
                             st.warning(f"Inga träffar för kilometer {search_query}.")
-                    # Ordsökning
                     else:
                         st.subheader(f"Resultat för sökordet '{search_query}'")
                         results_df = df[df['Information'].str.contains(search_query, case=False, na=False, regex=False)]
@@ -650,20 +804,209 @@ def render_linjebocker_page():
         st.error(f"Ett oväntat fel inträffade: {e}")
 
 # ==============================================================================
+# NYA SIDOR FÖR BLANKETTER
+# ==============================================================================
+def render_blanketter_menu_page():
+    """Visar en meny för att välja vilken blankett som ska fyllas i."""
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.header("Svenska Blanketter")
+    st.write("Välj en blankett nedan för att börja fylla i den.")
+    
+    st.button("📝 Blankett 21: Passage av signal i 'stopp'", on_click=go_to_blankett_21, use_container_width=True)
+    # Framtida blanketter kan läggas till här som nya knappar
+
+def render_blankett_21_page():
+    """Renderar formuläret för att fylla i Blankett 21."""
+    st.button("⬅️ Tillbaka till blankettmenyn", on_click=go_to_blanketter_menu)
+    st.title("Fylla i blankett 21: Passage av signal i 'stopp'")
+    st.info("Fyll i fälten nedan. När du är klar, klicka på knappen längst ner för att skapa en ifylld PDF.")
+
+    with st.form("blankett_21_form"):
+        st.header("Grundinformation")
+        col1_form, col2_form = st.columns(2)
+        with col1_form:
+            datum_input = st.date_input("Datum", value=datetime.now())
+        with col2_form:
+            tag_spar_input = st.text_input(
+                "Tåg/Spärrfärd",
+                 placeholder="Ange Tågnummer eller spärrfärd")
+            
+        driftplats_input = st.text_input(
+            "Driftplats/driftplatsdel eller sträcka",
+             placeholder="Ange driftplats, driftplatsdel eller sträcka..."
+    )
+
+        st.header("Signaler som får passeras")
+        st.caption("Ange signalens namn. Kryssa i rutan efter att signalen har passerats i verkligheten.")
+
+        # Dynamiskt skapa rader för signaler
+        signal_data = {}
+        signal_types = ["infsi/msi", "ublsi", "mblsi", "mblsi", "mblsi", "utfsi", "mblsi", "mblsi", "mblsi", "mblsi"]
+        for i, sig_type in enumerate(signal_types, 1):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                signal_data[f"signal_{i}_name"] = st.text_input(f"Namn för {sig_type}", key=f"sig_name_{i}", label_visibility="collapsed", placeholder=f"Namn på {sig_type}...")
+            with col2:
+                signal_data[f"signal_{i}_checked"] = st.checkbox(sig_type, key=f"sig_check_{i}", label_visibility="hidden")
+
+        st.header("Övriga uppgifter")
+        col1, col2 = st.columns(2)
+        with col1:
+            forts_fran_checked = st.checkbox("Fortsättning från föregående blankett")
+        with col2:
+            forts_pa_checked = st.checkbox("Fortsätter på nästa blankett")
+
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            vxl_dvarg_antal_input = st.text_input("Växlingsdvärgsignaler får passeras i 'stopp':", key="vxl_antal", placeholder="Antal...")
+            
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            stopplykta_antal_input = st.text_input("Stopplyktor får passeras i 'stopp':", key="stopp_antal", placeholder="Antal...")
+            
+        st.header("Växlar")
+        vaxlar_ratt_checked = st.checkbox("Växlarna ligger rätt")
+        kontrollera_vaxlar_checked = st.checkbox("Kontrollera växlarna", key="vaxlar_kontrollera")
+
+        motvaxel_data = {}
+        motvaxel_labels = [
+            "Första motväxel i", "Andra motväxel i", "Tredje motväxel i", 
+            "Fjärde motväxel i", "Femte motväxel i", "Sjätte motväxel i", 
+            "Sjunde motväxel i", "Åttonde motväxel i", "Nionde motväxel i", 
+            "Tionde motväxel i"
+        ]
+        for i, label in enumerate(motvaxel_labels, 1):
+            cols = st.columns([2, 1, 1])
+            cols[0].write(label)
+            motvaxel_data[f"motvaxel_{i}_vanster"] = cols[1].checkbox("vänster", key=f"vx{i}_v")
+            motvaxel_data[f"motvaxel_{i}_hoger"] = cols[2].checkbox("höger", key=f"vx{i}_h")
+
+        st.header("Särskilda villkor och anmälan")
+        villkor_tsm_checked = st.checkbox("Enligt villkor från tsm/htsm")
+        hinder_fardvag_checked = st.checkbox("Hinder i tågfärdvägen")
+        hinder_skydd_checked = st.checkbox("Hinder på tågfärdvägens skyddssträcka")
+        passera_samtliga_mbsisparr_checked = st.checkbox("Samtliga mellanblocksignaler på spärrfärdssträckan får passeras")
+        col1, col2 = st.columns([3, 2])
+        with col1:
+            ankomst_checked = st.checkbox("Ankomstanmälan ska lämnas vid")
+        with col2:
+            ankomst_plats_input = st.text_input(
+                "Trafikplats",
+                key="ankomst_plats",
+                label_visibility="collapsed",
+                placeholder="Ankomstanmälan vid..."
+    )
+
+        col1, col2 = st.columns([3, 2])
+        with col1:
+            brosignal_checked = st.checkbox("Brosignal får passeras")
+        with col2:
+            brosignal_name_input = st.text_input(
+                "Namn på brosignal",
+                key="brosignal_namn",
+                label_visibility="collapsed",
+                placeholder="Namn på brosignal..."
+    )
+
+        col1, col2 = st.columns([3, 2])
+        with col1:
+            skredvarning_checked = st.checkbox("Skredvarningsstopplykta får passeras")
+        with col2:
+            skredvarning_namn_input = st.text_input(
+                "Namn på skredvarningsstopplykta",
+                key="skredvarning_namn",
+                label_visibility="collapsed",
+                placeholder="Namn på skredvarningsstopplykta..."
+    )
+
+        st.header("System M")
+        col1, col2 = st.columns([3, 2])
+        with col1:
+             system_m_plats_input = st.text_input(
+                 "Vid den obevakade driftplatsen",
+                 key="system_m_plats",
+                 label_visibility="collapsed",
+                 placeholder="Ange driftplats..."
+    )
+        col_sm1, col_sm2 = st.columns(2)
+        with col_sm1:
+                system_m_foljande_checked = st.checkbox("Följande signaler passeras", key="system_m_foljande")
+        with col_sm2:
+                system_m_passera_input = st.text_input(
+                "Signal som passeras",
+                key="system_m_passera",
+                label_visibility="collapsed",
+                placeholder="Namn på signal som passeras..."
+                )
+
+        col_sm1, col_sm2 = st.columns(2)
+        with col_sm1:
+             system_m_alla_checked = st.checkbox("Alla signaler passeras", key="system_m_alla")
+
+        
+        st.header("Underskrifter")
+        tillstandsnummer_input = st.text_input("Tillståndsnummer")
+        klockslag_input = st.text_input("Klockslag")
+        dp_fjbc_input = st.text_input("Dp/fjbc")
+        tkl_namn_input = st.text_input("Tågklarerare (namn)")
+        forare_namn_input = st.text_input("Förare/tillsyningsman (namn)")
+
+        submitted = st.form_submit_button("Skapa ifylld blankett")
+
+    if submitted:
+        # Samla all data från formuläret i en dictionary
+        form_data = {
+            "datum": datum_input.strftime("%Y-%m-%d"),
+            "tag_spar": tag_spar_input,
+            "driftplats": driftplats_input,
+            "forts_fran": forts_fran_checked,
+            "forts_pa": forts_pa_checked,
+            "vxl_dvarg_antal": vxl_dvarg_antal_input,
+            "stopplykta_antal": stopplykta_antal_input,
+            "vaxlar_ratt": vaxlar_ratt_checked,
+            "kontrollera_vaxlar": kontrollera_vaxlar_checked,
+            "villkor_tsm": villkor_tsm_checked,
+            "hinder_fardvag": hinder_fardvag_checked,
+            "hinder_skydd": hinder_skydd_checked,
+            "ankomst_checked": ankomst_checked,
+            "ankomst_plats": ankomst_plats_input,
+            "brosignal": brosignal_checked,
+            "brosignal_name": brosignal_name_input,
+            "skredvarning": skredvarning_checked,
+            "skrevrvarning_name": skredvarning_namn_input,  
+            "system_m_plats": system_m_plats_input,
+            "system_m_foljande": system_m_foljande_checked,
+            "system_m_passera": system_m_passera_input,
+            "system_m_alla": system_m_alla_checked,
+            "tillstandsnummer": tillstandsnummer_input,
+            "klockslag": klockslag_input,
+            "dp_fjbc": dp_fjbc_input,
+            "tkl_namn": tkl_namn_input,
+            "forare_namn": forare_namn_input,
+            "samtliga_mbsisparr": passera_samtliga_mbsisparr_checked,
+        }
+        # Lägg till signaldata och motväxeldata
+        form_data.update(signal_data)
+        form_data.update(motvaxel_data)
+        
+        pdf_bytes = skapa_ifyllt_dokument(form_data)
+        
+        st.success("PDF-blanketten har skapats!")
+        
+        st.download_button(
+            label="Ladda ner ifylld blankett",
+            data=pdf_bytes,
+            file_name=f"ifyllt_blankett_21_{form_data['tag_spar']}.pdf",
+            mime="application/pdf",
+        )
+
+# ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
 # ==============================================================================
-# Lägger till en platshållare för autentisering, men inaktiverad som standard
-# För att aktivera, lägg till en config.yaml och avkommentera
-# with open('config.yaml') as file:
-#     config = yaml.load(file, Loader=SafeLoader)
-# authenticator = stauth.Authenticate(...)
-
-# I detta exempel kör vi appen utan inloggning
 if 'authentication_status' not in st.session_state:
-    st.session_state.authentication_status = True # Sätt till True för att köra direkt
+    st.session_state.authentication_status = True
 
 if st.session_state["authentication_status"]:
-    #st.sidebar.button('Logout', on_click=authenticator.logout) # Om du använder authenticator
     if st.session_state.page == 'main':
         render_main_page()
     elif st.session_state.page == 'svenska':
@@ -672,5 +1015,7 @@ if st.session_state["authentication_status"]:
         render_norska_page()
     elif st.session_state.page == 'linjebocker':
         render_linjebocker_page()
-# else:
-#     st.write("Du måste logga in för att använda appen.")
+    elif st.session_state.page == 'blanketter_menu':
+        render_blanketter_menu_page()
+    elif st.session_state.page == 'blankett_21':
+        render_blankett_21_page()
