@@ -545,7 +545,7 @@ def skapa_ifyllt_dokument(data):
     pdf.text(x=46, y=281.5, txt=data["tkl_namn"].encode('latin-1', 'replace').decode('latin-1'))
     pdf.text(x=117, y=281.5, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
 
-    return bytes(pdf.output())
+    return pdf.output(dest="S").encode("latin-1")
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
