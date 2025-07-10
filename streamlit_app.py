@@ -394,7 +394,7 @@ def skapa_ifyllt_dokument(data):
     
     image_data = load_image_to_bytesio("blankett_21_bakgrund.png")
     if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297)
+        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
     else:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
@@ -509,7 +509,7 @@ def skapa_etcs_dokument(data):
     
     image_data = load_image_to_bytesio("blankett_etcs_bakgrund.png")
     if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297)
+        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
     else:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
@@ -610,7 +610,7 @@ def skapa_etcs_baksida_dokument(data):
     
     image_data = load_image_to_bytesio("blankett_etcs_baksida_bakgrund.png")
     if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297)
+        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
     else:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
