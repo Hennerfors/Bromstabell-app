@@ -373,19 +373,6 @@ def search_in_data(df, km_input):
     
     return relevanta_rader.iloc[-1]
 
-def load_image_to_bytesio(path):
-    """
-    Läser in en bildfil och returnerar den som ett BytesIO-objekt
-    med ett 'name'-attribut för att FPDF ska fungera korrekt.
-    """
-    try:
-        with open(path, "rb") as f:
-            image_stream = BytesIO(f.read())
-            # Detta är den magiska raden: vi ger vårt in-memory-objekt ett namn.
-            image_stream.name = path 
-            return image_stream
-    except FileNotFoundError:
-        return None
 # ==============================================================================
 # FUNKTIONER FÖR BLANKETTER
 # ==============================================================================
@@ -397,15 +384,17 @@ def skapa_ifyllt_dokument(data):
     """
     pdf = FPDF()
     pdf.add_page()
-    
-    image_data = load_image_to_bytesio("blankett_21_bakgrund.png")
-    if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
-    else:
+    try:
+        pdf.image("blankett_21_bakgrund.png", x=0, y=0, w=210, h=297)
+    except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_21_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output(dest="S"))
+        return bytes(pdf.output())
+    # ...fortsätt med att fylla i PDF:en...
+    # pdf.set_font(...)
+    # pdf.text(...)
+    return bytes(pdf.output())
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -512,16 +501,14 @@ def skapa_etcs_dokument(data):
     """
     pdf = FPDF()
     pdf.add_page()
-    
-    image_data = load_image_to_bytesio("blankett_etcs_bakgrund.png")
-    if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
-    else:
+    try:
+        pdf.image("blankett_etcs_bakgrund.png", x=0, y=0, w=210, h=297)
+    except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output(dest="S"))
-
+        return bytes(pdf.output())
+    
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
 
@@ -614,14 +601,13 @@ def skapa_etcs_baksida_dokument(data):
     pdf = FPDF()
     pdf.add_page()
     
-    image_data = load_image_to_bytesio("blankett_etcs_baksida_bakgrund.png")
-    if image_data:
-        pdf.image(image_data, x=0, y=0, w=210, h=297, type='PNG')
-    else:
+    try:
+        pdf.image("blankett_etcs_baksida_bakgrund.png", x=0, y=0, w=210, h=297)
+    except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output(dest="S"))
+        return bytes(pdf.output())    
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
