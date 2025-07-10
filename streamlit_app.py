@@ -390,11 +390,8 @@ def skapa_ifyllt_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_21_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output())
-    # ...fortsätt med att fylla i PDF:en...
-    # pdf.set_font(...)
-    # pdf.text(...)
-    return bytes(pdf.output())
+        return bytes(pdf.output(dest="S"))
+      
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -507,7 +504,7 @@ def skapa_etcs_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output())
+        return bytes(pdf.output(dest="S"))
     
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -607,7 +604,7 @@ def skapa_etcs_baksida_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.png' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output())    
+        return bytes(pdf.output(dest="S"))    
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
