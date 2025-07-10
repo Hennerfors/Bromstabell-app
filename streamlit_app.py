@@ -1021,11 +1021,11 @@ def render_blankett_21_page():
         
         st.header("System M")
         system_m_plats_input = st.text_input("Vid den obevakade driftplatsen", placeholder="Ange driftplats...")
-        system_m_alla_checked = st.checkbox("alla signaler passeras", key="system_m_alla")
+        system_m_alla_checked = st.checkbox("Alla signaler passeras", key="system_m_alla")
         
         col_sm1, col_sm2 = st.columns(2)
         with col_sm1:
-            system_m_foljande_checked = st.checkbox("följande signaler passeras", key="system_m_foljande")
+            system_m_foljande_checked = st.checkbox("Följande signaler passeras", key="system_m_foljande")
         with col_sm2:
             system_m_passera_input = st.text_input("Signal som passeras", key="system_m_passera", label_visibility="collapsed", placeholder="Namn på signal...")
         
