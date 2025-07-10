@@ -374,10 +374,16 @@ def search_in_data(df, km_input):
     return relevanta_rader.iloc[-1]
 
 def load_image_to_bytesio(path):
-    """Läser in en bildfil och returnerar den som ett BytesIO-objekt för FPDF."""
+    """
+    Läser in en bildfil och returnerar den som ett BytesIO-objekt
+    med ett 'name'-attribut för att FPDF ska fungera korrekt.
+    """
     try:
         with open(path, "rb") as f:
-            return BytesIO(f.read())
+            image_stream = BytesIO(f.read())
+            # Detta är den magiska raden: vi ger vårt in-memory-objekt ett namn.
+            image_stream.name = path 
+            return image_stream
     except FileNotFoundError:
         return None
 # ==============================================================================
