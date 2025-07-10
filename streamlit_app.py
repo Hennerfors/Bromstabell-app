@@ -385,11 +385,11 @@ def skapa_ifyllt_dokument(data):
     pdf = FPDF()
     pdf.add_page()
     try:
-        pdf.image("blankett_21_bakgrund.png", x=0, y=0, w=210, h=297)
+        pdf.image("blankett_21_bakgrund.jpg", x=0, y=0, w=210, h=297)
     except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
-        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_21_bakgrund.png' kunde inte laddas.", ln=True, align='C')
+        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_21_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
         return bytes(pdf.output(dest="S"))
       
 
@@ -499,11 +499,11 @@ def skapa_etcs_dokument(data):
     pdf = FPDF()
     pdf.add_page()
     try:
-        pdf.image("blankett_etcs_bakgrund.png", x=0, y=0, w=210, h=297)
+        pdf.image("blankett_etcs_bakgrund.jpg", x=0, y=0, w=210, h=297)
     except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
-        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.png' kunde inte laddas.", ln=True, align='C')
+        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
         return bytes(pdf.output(dest="S"))
     
     pdf.set_font("Helvetica", "", 10)
@@ -599,11 +599,11 @@ def skapa_etcs_baksida_dokument(data):
     pdf.add_page()
     
     try:
-        pdf.image("blankett_etcs_baksida_bakgrund.png", x=0, y=0, w=210, h=297)
+        pdf.image("blankett_etcs_baksida_bakgrund.jpg", x=0, y=0, w=210, h=297)
     except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
-        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.png' kunde inte laddas.", ln=True, align='C')
+        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
         return bytes(pdf.output(dest="S"))    
 
     pdf.set_font("Helvetica", "", 10)
@@ -713,9 +713,9 @@ def render_svenska_page():
     def visa_karta_dialog():
         st.subheader("Karta över bandelar A, B, C, D, D+, E och EM")
         try:
-            st.image("Karta.png")
+            st.image("Karta.jpg")
         except Exception:
-            st.warning("Bilden 'Karta.png' kunde inte hittas.")
+            st.warning("Bilden 'Karta.jpg' kunde inte hittas.")
 
     if st.button("🗺️ Visa översiktskarta över svenska bandelar"):
         visa_karta_dialog()
