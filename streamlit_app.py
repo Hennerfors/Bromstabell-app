@@ -992,8 +992,8 @@ def render_blankett_21_page():
         for i, label in enumerate(motvaxel_labels, 1):
             cols = st.columns([2, 1, 1])
             cols[0].write(label)
-            motvaxel_data[f"motvaxel_{i}_vanster"] = cols[1].checkbox("vänster", key=f"vx{i}_v")
-            motvaxel_data[f"motvaxel_{i}_hoger"] = cols[2].checkbox("höger", key=f"vx{i}_h")
+            motvaxel_data[f"motvaxel_{i}_vanster"] = cols[1].checkbox("Vänster", key=f"vx{i}_v")
+            motvaxel_data[f"motvaxel_{i}_hoger"] = cols[2].checkbox("Höger", key=f"vx{i}_h")
 
         st.header("Särskilda villkor och anmälan")
         villkor_tsm_checked = st.checkbox("Enligt villkor från tsm/htsm")
