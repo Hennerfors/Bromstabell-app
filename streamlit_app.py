@@ -591,13 +591,13 @@ def skapa_etcs_dokument(data):
     if data["nodstopp_rapportera_till_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=180.07, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=78.1, y=179, txt=str(data,get["nodstopp_rapportera_till"]))
+        pdf.text(x=78.1, y=179, txt=str(data,get("nodstopp_rapportera_till")))
         
     if data["nodstopp_ytterligare_instruktioner_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=188.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=36.2, y=191.5)
-        pdf.multi_cell(w=160, h=8.2, txt=str(data.get["nodstopp_ytterligare_instruktioner_text"]))
+        pdf.multi_cell(w=160, h=8.2, txt=str(data.get("nodstopp_ytterligare_instruktioner_text")))
 
     # 3: Order om att stå stilla
     pdf.set_font("Helvetica", "B", 12)
@@ -609,7 +609,7 @@ def skapa_etcs_dokument(data):
         pdf.text(x=26.1, y=232.3, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=30, y=234)
-        pdf.multi_cell(w=160, h=7.2, txt=str(data.get["order_ytterligare_instruktioner_text"]))
+        pdf.multi_cell(w=160, h=7.2, txt=str(data.get("order_ytterligare_instruktioner_text")))
 
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
