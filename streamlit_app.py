@@ -419,7 +419,7 @@ def skapa_ifyllt_dokument(data):
             pdf.text(x=signal_x_coords[i][0], y=signal_y_coords[i][0], txt="X")
         if data[f"signal_{i}_name"]:
             pdf.set_font("Helvetica", "", 10)
-            pdf.text(x=signal_x_coords[i][1], y=signal_y_coords[i][1], txt=str(data[f"signal_{i}_name"]))
+            pdf.text(x=signal_x_coords[i][1], y=signal_y_coords[i][1], txt=str(data.get[f"signal_{i}_name"]))
 
     # Fortsättning
     if data["forts_fran"]:
@@ -463,30 +463,30 @@ def skapa_ifyllt_dokument(data):
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=83.62, y=199.6, txt="X")
         if data["ankomst_checked"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.19, y=219.31, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=80, y=218, txt=str(data["ankomst_plats"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=80, y=218, txt=str(data.get["ankomst_plats"]))
 
         if data["brosignal"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.83, y=230.32, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=45.09, y=229, txt=str(data["brosignal_name"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=45.09, y=229, txt=str(data.get["brosignal_name"]))
         if data["skredvarning"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=109.66, y=230.32, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=151.15, y=229, txt=str(data["skrevrvarning_name"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=151.15, y=229, txt=str(data.get["skrevrvarning_name"]))
 
     # System M
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=71.55, y=244, txt=str(data["system_m_plats"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=71.55, y=244, txt=str(data.get["system_m_plats"]))
         if data["system_m_alla"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.3, y=253.60, txt="X")
         if data["system_m_foljande"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=75.15, y=253.3, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=119.18, y=252, txt=str(data["system_m_passera"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=119.18, y=252, txt=str(data.get["system_m_passera"]))
     
         # Footer-information
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=55, y=268, txt=str(data["tillstandsnummer"]))
-        pdf.text(x=128, y=268, txt=str(data["klockslag"]))
-        pdf.text(x=26, y=281.5, txt=str(data["dp_fjbc"]))
-        pdf.text(x=46, y=281.5, txt=str(data["tkl_namn"]))
-        pdf.text(x=117, y=281.5, txt=str(data["forare_namn"]))
+        pdf.text(x=55, y=268, txt=str(data.get["tillstandsnummer"]))
+        pdf.text(x=128, y=268, txt=str(data.get["klockslag"]))
+        pdf.text(x=26, y=281.5, txt=str(data.get["dp_fjbc"]))
+        pdf.text(x=46, y=281.5, txt=str(data.get["tkl_namn"]))
+        pdf.text(x=117, y=281.5, txt=str(data.get["forare_namn"]))
 
     return bytes(pdf.output(dest="S"))
 
@@ -512,12 +512,12 @@ def skapa_etcs_dokument(data):
     pdf.set_text_color(0, 0, 0)
 
     # A: Grunduppgifter
-    pdf.text(x=63.21, y=42, txt=str(data["tag_nr"]))
+    pdf.text(x=63.21, y=42, txt=str(data.get("tag_nr")))
     pdf.text(x=124.31, y=42, txt=nytt_datum)
-    pdf.text(x=156.9, y=42, txt=str(data["klocka_uppe"]))
-    pdf.text(x=32.53, y=55, txt=str(data["vid_plats"]))
-    pdf.text(x=90, y=55, txt=str(data["pa_spar"]))
-    pdf.text(x=117.5, y=55, txt=str(data["fjbc"]))
+    pdf.text(x=156.9, y=42, txt=str(data.get("klocka_uppe")))
+    pdf.text(x=32.53, y=55, txt=str(data.get("vid_plats")))
+    pdf.text(x=90, y=55, txt=str(data.get("pa_spar")))
+    pdf.text(x=117.5, y=55, txt=str(data.get("fjbc")))
 
     # 1: Stoppassagemedgivande
     if data["stopp_passagemedgivande_checked"]:
@@ -527,20 +527,20 @@ def skapa_etcs_dokument(data):
         pdf.set_font("Helvetica", "B", 12); 
         pdf.text(x=26.18, y=74.3, txt="X")
     pdf.set_font("Helvetica", "", 10); 
-    pdf.text(x=48.40, y=74.04, txt=str(data["stopp_passera_km"]))
+    pdf.text(x=48.40, y=74.04, txt=str(data.get("stopp_passera_km")))
     
     if data["stopp_fram_till_checked"]:
         pdf.set_font("Helvetica", "B", 12); 
         pdf.text(x=26.18, y=82, txt="X")
     pdf.set_font("Helvetica", "", 10); 
-    pdf.text(x=52.1, y=81.5, txt=str(data["stopp_fram_till_km"]))
+    pdf.text(x=52.1, y=81.5, txt=str(data.get("stopp_fram_till_km")))
 
     if data["stopp_ytterligare_instruktioner_checked"]:
         pdf.set_font("Helvetica", "B", 12); 
         pdf.text(x=26.18, y=90, txt="X")
     pdf.set_font("Helvetica", "", 10)
     pdf.set_xy(x=30.5, y=92.3)
-    pdf.multi_cell(w=160, h=7.3, txt=str(data["stopp_ytterligare_instruktioner_text"]))
+    pdf.multi_cell(w=160, h=7.3, txt=str(data.get("stopp_ytterligare_instruktioner_text")))
     
     pdf.set_font("Helvetica", "B", 12)
     if data["stopp_vaxlar_ratt"]:
@@ -587,17 +587,17 @@ def skapa_etcs_dokument(data):
         pdf.text(x=26.1, y=163, txt="X")
     if data["nodstopp_undersoka_checked"]:
         pdf.text(x=26.1, y=171.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=91.6, y=170.55, txt=str(data["nodstopp_undersoka_skal"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=91.6, y=170.55, txt=str(data.get["nodstopp_undersoka_skal"]))
     if data["nodstopp_rapportera_till_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=180.07, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=78.1, y=179, txt=str(data["nodstopp_rapportera_till"]))
+        pdf.text(x=78.1, y=179, txt=str(data,get["nodstopp_rapportera_till"]))
         
     if data["nodstopp_ytterligare_instruktioner_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=188.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=36.2, y=191.5)
-        pdf.multi_cell(w=160, h=8.2, txt=str(data["nodstopp_ytterligare_instruktioner_text"]))
+        pdf.multi_cell(w=160, h=8.2, txt=str(data.get["nodstopp_ytterligare_instruktioner_text"]))
 
     # 3: Order om att stå stilla
     pdf.set_font("Helvetica", "B", 12)
@@ -609,14 +609,14 @@ def skapa_etcs_dokument(data):
         pdf.text(x=26.1, y=232.3, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=30, y=234)
-        pdf.multi_cell(w=160, h=7.2, txt=str(data["order_ytterligare_instruktioner_text"]))
+        pdf.multi_cell(w=160, h=7.2, txt=str(data.get["order_ytterligare_instruktioner_text"]))
 
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=46.73, y=257.49, txt=str(data["forare_namn"]))
-    pdf.text(x=137, y=257.49, txt=str(data["utfardare_namn"]))
-    pdf.text(x=39.7, y=266.5, txt=str(data["klockslag"]))
-    pdf.text(x=132.42, y=266.5, txt=str(data["ordernummer"]))
+    pdf.text(x=46.73, y=257.49, txt=str(data.get("forare_namn")))
+    pdf.text(x=137, y=257.49, txt=str(data.get("utfardare_namn")))
+    pdf.text(x=39.7, y=266.5, txt=str(data.get("klockslag")))
+    pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
     return bytes(pdf.output(dest="S"))
 
@@ -640,42 +640,42 @@ def skapa_etcs_baksida_dokument(data):
     pdf.set_text_color(0, 0, 0)
 
     # A: Grunduppgifter (samma som framsida)
-    pdf.text(x=68, y=41.5, txt=str(data["tag_nr"]))
-    pdf.text(x=138, y=41.5, txt=str(data["datum"]))
-    pdf.text(x=40, y=50, txt=str(data["vid_plats"]))
-    pdf.text(x=105, y=50, txt=str(data["pa_spar"]))
-    pdf.text(x=160, y=50, txt=str(data["fjbc"]))
+    pdf.text(x=68, y=41.5, txt=str(data.get["tag_nr"]))
+    pdf.text(x=138, y=41.5, txt=str(data.get["datum"]))
+    pdf.text(x=40, y=50, txt=str(data.get["vid_plats"]))
+    pdf.text(x=105, y=50, txt=str(data.get["pa_spar"]))
+    pdf.text(x=160, y=50, txt=str(data.get["fjbc"]))
 
     # 4: Upphävande av order
     if data["upphavande_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=66.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=72, txt=str(data["upphavande_ordernr"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=72, txt=str(data.get["upphavande_ordernr"]))
     if data["upphavande_ytterligare_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=82.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=40, y=86)
-        pdf.multi_cell(w=150, h=5, txt=str(data["upphavande_ytterligare_text"]))
+        pdf.multi_cell(w=150, h=5, txt=str(data.get["upphavande_ytterligare_text"]))
 
     # 5: Order om att köra med nedsatt hastighet
     if data["nedsatt_hastighet_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=100.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=82, y=105.5, txt=str(data["nedsatt_hastighet_kmh"]))
-        pdf.text(x=120, y=105.5, txt=str(data["nedsatt_hastighet_fran"]))
-        pdf.text(x=152, y=105.5, txt=str(data["nedsatt_hastighet_till"]))
+        pdf.text(x=82, y=105.5, txt=str(data.get["nedsatt_hastighet_kmh"]))
+        pdf.text(x=120, y=105.5, txt=str(data.get["nedsatt_hastighet_fran"]))
+        pdf.text(x=152, y=105.5, txt=str(data.get["nedsatt_hastighet_till"]))
     
     if data["nedsatt_undersoka_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=118, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=95, y=118, txt=str(data["nedsatt_undersoka_skal"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=95, y=118, txt=str(data.get["nedsatt_undersoka_skal"]))
     
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=95, y=127, txt=str(data["nedsatt_rapportera_till"]))
+    pdf.text(x=95, y=127, txt=str(data.get["nedsatt_rapportera_till"]))
     
     if data["nedsatt_ytterligare_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=133.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=40, y=137)
-        pdf.multi_cell(w=150, h=5, txt=str(data["nedsatt_ytterligare_text"]))
+        pdf.multi_cell(w=150, h=5, txt=str(data.get["nedsatt_ytterligare_text"]))
 
     # 7: Tillstånd att starta i driftläge "särskilt ansvar"
     if data["sarskilt_ansvar_checked"]:
@@ -683,20 +683,20 @@ def skapa_etcs_baksida_dokument(data):
 
     if data["sarskilt_ansvar_passera_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=157.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=157.5, txt=str(data["sarskilt_ansvar_passera_text"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=157.5, txt=str(data.get["sarskilt_ansvar_passera_text"]))
     
     if data["sarskilt_ansvar_ytterligare_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=166.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
         pdf.set_xy(x=40, y=170)
-        pdf.multi_cell(w=150, h=5, txt=str(data["sarskilt_ansvar_ytterligare_text"]))
+        pdf.multi_cell(w=150, h=5, txt=str(data.get["sarskilt_ansvar_ytterligare_text"]))
 
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=44, y=278, txt=str(data["forare_namn"]))
-    pdf.text(x=44, y=284, txt=str(data["utstardare_namn"]))
-    pdf.text(x=138, y=278, txt=str(data["klockslag"]))
-    pdf.text(x=138, y=284, txt=str(data["ordernummer"]))
+    pdf.text(x=44, y=278, txt=str(data.get["forare_namn"]))
+    pdf.text(x=44, y=284, txt=str(data.get["utstardare_namn"]))
+    pdf.text(x=138, y=278, txt=str(data.get["klockslag"]))
+    pdf.text(x=138, y=284, txt=str(data.get["ordernummer"]))
 
     return bytes(pdf.output(dest="S"))
 
