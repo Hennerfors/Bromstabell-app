@@ -488,7 +488,7 @@ def skapa_ifyllt_dokument(data):
         pdf.text(x=46, y=281.5, txt=str(data.get["tkl_namn"]))
         pdf.text(x=117, y=281.5, txt=str(data.get["forare_namn"]))
 
-    return bytes(pdf.output(dest="S"))
+    return pdf.output(dest="S").encode("latin-1")
 
 
 def skapa_etcs_dokument(data):
@@ -506,7 +506,7 @@ def skapa_etcs_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output(dest="S"))
+        return pdf.output(dest="S").encode("latin-1")
     
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -618,7 +618,7 @@ def skapa_etcs_dokument(data):
     pdf.text(x=39.7, y=266.5, txt=str(data.get("klockslag")))
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
-    return bytes(pdf.output(dest="S"))
+    return pdf.output(dest="S").encode("latin-1")
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -634,7 +634,7 @@ def skapa_etcs_baksida_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
-        return bytes(pdf.output(dest="S"))    
+        return pdf.output(dest="S").encode("latin-1")   
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -698,7 +698,7 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=138, y=278, txt=str(data.get["klockslag"]))
     pdf.text(x=138, y=284, txt=str(data.get["ordernummer"]))
 
-    return bytes(pdf.output(dest="S"))
+    return pdf.output(dest="S").encode("latin-1")
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
