@@ -463,30 +463,30 @@ def skapa_ifyllt_dokument(data):
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=83.62, y=199.6, txt="X")
         if data["ankomst_checked"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.19, y=219.31, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=80, y=218, txt=str(data.get["ankomst_plats"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=80, y=218, txt=str(data.get("ankomst_plats")))
 
         if data["brosignal"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.83, y=230.32, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=45.09, y=229, txt=str(data.get["brosignal_name"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=45.09, y=229, txt=str(data.get("brosignal_name")))
         if data["skredvarning"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=109.66, y=230.32, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=151.15, y=229, txt=str(data.get["skrevrvarning_name"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=151.15, y=229, txt=str(data.get("skrevrvarning_name")))
 
     # System M
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=71.55, y=244, txt=str(data.get["system_m_plats"]))
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=71.55, y=244, txt=str(data.get("system_m_plats")))
         if data["system_m_alla"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=25.3, y=253.60, txt="X")
         if data["system_m_foljande"]:
             pdf.set_font("Helvetica", "B", 12); pdf.text(x=75.15, y=253.3, txt="X")
-            pdf.set_font("Helvetica", "", 10); pdf.text(x=119.18, y=252, txt=str(data.get["system_m_passera"]))
+            pdf.set_font("Helvetica", "", 10); pdf.text(x=119.18, y=252, txt=str(data.get("system_m_passera")))
     
         # Footer-information
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=55, y=268, txt=str(data.get["tillstandsnummer"]))
-        pdf.text(x=128, y=268, txt=str(data.get["klockslag"]))
-        pdf.text(x=26, y=281.5, txt=str(data.get["dp_fjbc"]))
-        pdf.text(x=46, y=281.5, txt=str(data.get["tkl_namn"]))
-        pdf.text(x=117, y=281.5, txt=str(data.get["forare_namn"]))
+        pdf.text(x=55, y=268, txt=str(data.get("tillstandsnummer")))
+        pdf.text(x=128, y=268, txt=str(data.get("klockslag")))
+        pdf.text(x=26, y=281.5, txt=str(data.get("dp_fjbc")))
+        pdf.text(x=46, y=281.5, txt=str(data.get("tkl_namn")))
+        pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn")))
 
     return pdf.output(dest="S").encode("latin-1")
 
