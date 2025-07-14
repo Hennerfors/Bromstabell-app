@@ -615,7 +615,7 @@ def skapa_etcs_dokument(data):
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
     pdf.text(x=46.73, y=257.49, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=137, y=257.49, txt=data["utfardare_namn1"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=137, y=257.49, txt=data["utfardare_namn"].encode('latin-1', 'replace').decode('latin-1'))
     pdf.text(x=39.7, y=266.5, txt=data["klockslag"].encode('latin-1', 'replace').decode('latin-1'))
     pdf.text(x=132.42, y=266.5, txt=data["ordernummer"].encode('latin-1', 'replace').decode('latin-1'))
 
@@ -1171,7 +1171,7 @@ def render_blankett_etcs_page():
         col_u1, col_u2 = st.columns(2)
         with col_u1:
             forare_namn_input = st.text_input("Förare (namn)", key="etcs_forare")
-            utfardare_namn1_input = st.text_input("Utfärdare (namn)", key="etcs_utfardare")
+            utfardare_namn_input = st.text_input("Utfärdare (namn)", key="etcs_utfardare")
         with col_u2:
             klockslag_input = st.text_input("Klockslag", key="etcs_klock")
             ordernummer_input = st.text_input("Ordernummer", key="etcs_order")
@@ -1197,7 +1197,7 @@ def render_blankett_etcs_page():
             "order_stastilla_03": order_stastilla_03_checked,
             "order_sta_stilla": order_sta_stilla_checked, "order_ytterligare_instruktioner_checked": order_ytterligare_instruktioner_checked,
             "order_ytterligare_instruktioner_text": order_ytterligare_instruktioner_text_input,
-            "forare_namn": forare_namn_input, "utfardare_namn1": utfardare_namn1_input,
+            "forare_namn": forare_namn_input, "utfardare_namn": utfardare_namn_input,
             "klockslag": klockslag_input, "ordernummer": ordernummer_input,
             "stopp_passagemedgivande_checked": stopp_passagemedgivande_checked
         }
