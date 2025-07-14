@@ -591,7 +591,7 @@ def skapa_etcs_dokument(data):
     if data["nodstopp_rapportera_till_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=180.07, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=78.1, y=179, txt=str(data,get("nodstopp_rapportera_till")))
+        pdf.text(x=78.1, y=179, txt=str(data.get("nodstopp_rapportera_till")))
         
     if data["nodstopp_ytterligare_instruktioner_checked"]:
         pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=188.5, txt="X")
