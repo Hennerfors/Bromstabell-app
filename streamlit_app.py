@@ -488,7 +488,7 @@ def skapa_ifyllt_dokument(data):
     pdf.text(x=46, y=281.5, txt=data["tkl_namn"].encode('latin-1', 'replace').decode('latin-1'))
     pdf.text(x=117, y=281.5, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 
 def skapa_etcs_dokument(data):
@@ -500,6 +500,8 @@ def skapa_etcs_dokument(data):
     pdf.add_page()
     try:
         pdf.image("blankett_etcs_bakgrund.jpg", x=0, y=0, w=210, h=297)
+        datum_obj = datetime.strptime(data["datum"], "%Y-%m-%d")
+        nytt_datum = datum_obj.strftime("%y     %m     %d")
     except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
@@ -510,85 +512,114 @@ def skapa_etcs_dokument(data):
     pdf.set_text_color(0, 0, 0)
 
     # A: Grunduppgifter
-    pdf.text(x=68, y=41.5, txt=data["tag_nr"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=138, y=41.5, txt=data["datum"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=40, y=50, txt=data["vid_plats"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=105, y=50, txt=data["pa_spar"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=160, y=50, txt=data["fjbc"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=63.21, y=42, txt=data["tag_nr"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=124.31, y=42, txt=nytt_datum)
+    pdf.text(x=156.9, y=42, txt=data["klocka_uppe"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=32.53, y=55, txt=data["vid_plats"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=90, y=55, txt=data["pa_spar"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=117.5, y=55, txt=data["fjbc"].encode('latin-1', 'replace').decode('latin-1'))
 
     # 1: Stoppassagemedgivande
-    if data["stopp_passagemedgivande_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=58, txt="X")
+    if data["stopp_passagemedgivande_checked"]: #Avdelning 1
+        pdf.set_font("Helvetica", "B", 12); 
+        pdf.text(x=25.3, y=67.5, txt="X")
        
     if data["stopp_passera_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=65, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=82, y=77.5, txt=data["stopp_passera_km"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_font("Helvetica", "B", 12); 
+        pdf.text(x=26.18, y=74.3, txt="X")
+    pdf.set_font("Helvetica", "", 10); 
+    pdf.text(x=48.40, y=74.04, txt=data["stopp_passera_km"].encode('latin-1', 'replace').decode('latin-1'))
     
     if data["stopp_fram_till_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=85, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=82, y=97, txt=data["stopp_fram_till_km"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_font("Helvetica", "B", 12); 
+        pdf.text(x=26.18, y=82, txt="X")
+    pdf.set_font("Helvetica", "", 10); 
+    pdf.text(x=52.1, y=81.5, txt=data["stopp_fram_till_km"].encode('latin-1', 'replace').decode('latin-1'))
 
     if data["stopp_ytterligare_instruktioner_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=103, txt="X")
-        pdf.set_font("Helvetica", "", 10);
-        pdf.set_xy(x=40, y=107)
-        pdf.multi_cell(w=150, h=5, txt=data["stopp_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_font("Helvetica", "B", 12); 
+        pdf.text(x=26.18, y=90, txt="X")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_xy(x=30.5, y=92.3)
+    pdf.multi_cell(w=160, h=7.3, txt=data["stopp_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
     
     pdf.set_font("Helvetica", "B", 12)
     if data["stopp_vaxlar_ratt"]:
-        pdf.text(x=31.5, y=125, txt="X")
+        pdf.text(x=37.03, y=112.5, txt="X")
     if data["stopp_kontrollera_vaxlar"]:
-        pdf.text(x=31.5, y=131.5, txt="X")
+        pdf.text(x=37.03, y=119.5, txt="X")
 
     # Motväxlar
-    motvaxel_y_start = 139
-    motvaxel_x_left = 73
-    motvaxel_x_right = 97
-    for i in range(1, 6):
-        if data[f"motvaxel_{i}_vanster"]:
-            pdf.text(x=motvaxel_x_left, y=motvaxel_y_start + (i-1)*6.2, txt="X")
-        if data[f"motvaxel_{i}_hoger"]:
-            pdf.text(x=motvaxel_x_right, y=motvaxel_y_start + (i-1)*6.2, txt="X")
+    # Vänster kolumn: 3 vänster + 3 höger (totalt 6 rutor, 3 rader)
+    motvaxel_y_start = 127
+    motvaxel_y_spacing = 4.5
+    motvaxel_x_left = 74    # vänsterläge
+    motvaxel_x_right = 99   # högerläge
+    
+    for i in range(1, 4):  # 1 till 3
+        y = motvaxel_y_start + (i-1) * motvaxel_y_spacing
+        if data.get(f"motvaxel_{i}_vanster"):
+            pdf.text(x=motvaxel_x_left, y=y, txt="X")
+        if data.get(f"motvaxel_{i}_hoger"):
+            pdf.text(x=motvaxel_x_right, y=y, txt="X")
+    
+    # Höger kolumn: 2 vänster + 2 höger (totalt 4 rutor, 2 rader)
+    motvaxel_x_left2 = 154.28   # vänsterläge höger kolumn
+    motvaxel_x_right2 = 178.44  # högerläge höger kolumn
+    motvaxel_y_start2 = 127
+    
+    for i in range(4, 6):  # 4 till 5
+        y = motvaxel_y_start2 + (i-4) * motvaxel_y_spacing
+        if data.get(f"motvaxel_{i}_vanster"):
+            pdf.text(x=motvaxel_x_left2, y=y, txt="X")
+        if data.get(f"motvaxel_{i}_hoger"):
+            pdf.text(x=motvaxel_x_right2, y=y, txt="X")
             
     if data["stopp_enligt_tsm"]:
-        pdf.text(x=31.5, y=170, txt="X")
+        pdf.text(x=127.83, y=135.6, txt="X")
 
     # 2: Tillstånd att fortsätta efter "Nödstopp"
+    if data["nodstopp_02"]: #Avdelning 2
+        pdf.set_font("Helvetica", "B", 12); 
+        pdf.text(x=25.21, y=144.09, txt="X")
     if data["nodstopp_sarskilt_ansvar"]:
-        pdf.text(x=31.5, y=182, txt="X")
+        pdf.text(x=26.1, y=151.5, txt="X")
     if data["nodstopp_skiftning"]:
-        pdf.text(x=31.5, y=197, txt="X")
+        pdf.text(x=26.1, y=163, txt="X")
     if data["nodstopp_undersoka_checked"]:
-        pdf.text(x=31.5, y=203.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=95, y=203.5, txt=data["nodstopp_undersoka_skal"].encode('latin-1', 'replace').decode('latin-1'))
-    
-    pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=95, y=212.5, txt=data["nodstopp_rapportera_till"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.text(x=26.1, y=171.5, txt="X")
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=91.6, y=170.55, txt=data["nodstopp_undersoka_skal"].encode('latin-1', 'replace').decode('latin-1'))
+    if data["nodstopp_rapportera_till_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=180.07, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=78.1, y=179, txt=data["nodstopp_rapportera_till"].encode('latin-1', 'replace').decode('latin-1'))
         
     if data["nodstopp_ytterligare_instruktioner_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=218, txt="X")
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=26.1, y=188.5, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.set_xy(x=40, y=222)
-        pdf.multi_cell(w=150, h=5, txt=data["nodstopp_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_xy(x=36.2, y=191.5)
+        pdf.multi_cell(w=160, h=8.2, txt=data["nodstopp_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
 
     # 3: Order om att stå stilla
     pdf.set_font("Helvetica", "B", 12)
+    if data["order_stastilla_03"]:
+        pdf.text(x=25.3, y=213.5, txt="X")
     if data["order_sta_stilla"]:
-        pdf.text(x=31.5, y=239, txt="X")
+        pdf.text(x=26.1, y=220.8, txt="X")
     if data["order_ytterligare_instruktioner_checked"]:
-        pdf.text(x=31.5, y=248, txt="X")
+        pdf.text(x=26.1, y=232.3, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.set_xy(x=40, y=252)
-        pdf.multi_cell(w=150, h=5, txt=data["order_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
+        pdf.set_xy(x=30, y=234)
+        pdf.multi_cell(w=160, h=7.2, txt=data["order_ytterligare_instruktioner_text"].encode('latin-1', 'replace').decode('latin-1'))
 
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=44, y=278, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=44, y=284, txt=data["utstardare_namn"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=138, y=278, txt=data["klockslag"].encode('latin-1', 'replace').decode('latin-1'))
-    pdf.text(x=138, y=284, txt=data["ordernummer"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=46.73, y=257.49, txt=data["forare_namn"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=137, y=257.49, txt=data["utfardare_namn1"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=39.7, y=266.5, txt=data["klockslag"].encode('latin-1', 'replace').decode('latin-1'))
+    pdf.text(x=132.42, y=266.5, txt=data["ordernummer"].encode('latin-1', 'replace').decode('latin-1'))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -668,7 +699,7 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=138, y=278, txt=data["klockslag"].encode('latin-1', 'replace').decode('latin-1'))
     pdf.text(x=138, y=284, txt=data["ordernummer"].encode('latin-1', 'replace').decode('latin-1'))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
@@ -936,7 +967,7 @@ def render_blanketter_menu_page():
     st.write("Välj en blankett nedan för att börja fylla i den.")
     
     st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21, use_container_width=True)
-    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida (Under uteveckling)", on_click=go_to_blankett_etcs, use_container_width=True, disabled= True)
+    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida (Under uteveckling)", on_click=go_to_blankett_etcs, use_container_width=True, disabled= False)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida (Under uteveckling)" , on_click=go_to_blankett_etcs_baksida, use_container_width=True, disabled= True)
 
 
@@ -1081,7 +1112,8 @@ def render_blankett_etcs_page():
         with col1:
             tag_nr_input = st.text_input("Tåg/spärrfärd/växling nr", placeholder="Ange Tågnummer,spärrfärd, växlings nr..")
         with col2:
-            datum_input = st.date_input("Datum", value=datetime.now())
+            datum_input = st.date_input("Datum")
+            klocka_input = st.text_input("Klockslag", placeholder="Ange klockslag (HH:MM)")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1093,14 +1125,14 @@ def render_blankett_etcs_page():
 
         st.header("1: Stoppassagemedgivande")
         stopp_passagemedgivande_checked = st.checkbox("Avdelning 01: Stoppassagemedgivande")
-        stopp_passera_checked = st.checkbox("Får passera EOA", key="stopp_passera")
-        stopp_passera_km_input = st.text_input("Vid km/tavla/signal", key="stopp_passera_km", help="Stryk den text som inte gäller i parentesen (exempel km/tavla/signal).")
+        stopp_passera_checked = st.checkbox("Får passera EOA (och har körtillstånd / tillstånd att fortsätta)", key="stopp_passera")
+        stopp_passera_km_input = st.text_input("Vid km/tavla/signal", key="stopp_passera_km", help="Stryk den text som inte gäller i parentesen (exempel km/tavla/signal).", placeholder="Ange Km/Tavla/Signal")
         
-        stopp_fram_till_checked = st.checkbox("Får gå fram till", key="stopp_fram_till")
-        stopp_fram_till_km_input = st.text_input("Vid km/tavla/signal", key="stopp_fram_till_km", help="Stryk den text som inte gäller i parentesen (exempel km/tavla/signal).")
+        stopp_fram_till_checked = st.checkbox("Får gå fram till (och har körtillstånd dit / tillstånd att fortsätta dit)", key="stopp_fram_till")
+        stopp_fram_till_km_input = st.text_input("Vid km/tavla/signal", key="stopp_fram_till_km", help="Stryk den text som inte gäller i parentesen (exempel km/tavla/signal).", placeholder="Ange Km/Tavla/Signal")
 
         stopp_ytterligare_instruktioner_checked = st.checkbox("Ytterligare instruktioner", key="stopp_ytterligare")
-        stopp_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="stopp_ytterligare_text")
+        stopp_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="stopp_ytterligare_text", placeholder="Ange ytterligare instruktioner")
 
         st.write("Växlar:")
         stopp_vaxlar_ratt_checked = st.checkbox("Växlar ligger rätt")
@@ -1118,24 +1150,28 @@ def render_blankett_etcs_page():
         stopp_enligt_tsm_checked = st.checkbox("Enligt besked från tsm/htsm")
 
         st.header("2: Tillstånd att fortsätta efter driftläge 'Nödstopp'")
-        nodstopp_sarskilt_ansvar_checked = st.checkbox("Har tillstånd att starta i driftläge 'särskilt ansvar'")
+        nodstopp_02_checked = st.checkbox("Avdelning 02: Tillstånd att fortsätta efter driftläge 'Nödstopp'")
+        nodstopp_sarskilt_ansvar_checked = st.checkbox("Har tillstånd att starta i driftläge 'särkilt ansvar' " \
+        "om inget tekniskt körbesked tas emot (och har körtillstånd / tillstånd att fortsätta till den närmaste signalpunktstavlan).")
         nodstopp_skiftning_checked = st.checkbox("Får välja driftläge 'skiftning'")
         nodstopp_undersoka_checked = st.checkbox("Ska undersöka banan av följande skäl")
-        nodstopp_undersoka_skal_input = st.text_input("Skäl för undersökning")
-        nodstopp_rapportera_till_input = st.text_input("Ska rapportera resultatet till")
+        nodstopp_undersoka_skal_input = st.text_input("Skäl för undersökning", placeholder="Ange skäl för undersökning")
+        nodstopp_rapportera_till_checked = st.checkbox("Ska rapportera resultatet till", key="nodstopp_rapportera_till")
+        nodstopp_rapportera_till_input = st.text_input("Ska rapportera resultatet till", placeholder="Ange rapportera resultatet till")
         nodstopp_ytterligare_instruktioner_checked = st.checkbox("Ytterligare instruktioner", key="nodstopp_ytterligare")
-        nodstopp_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="nodstopp_ytterligare_text")
+        nodstopp_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="nodstopp_ytterligare_text", placeholder="Ange ytterligare instruktioner")
         
         st.header("3: Order om att stå stilla")
+        order_stastilla_03_checked = st.checkbox("Avdelning 03: Order om att stå stilla")
         order_sta_stilla_checked = st.checkbox("Förbli stående vid nuvarande position")
         order_ytterligare_instruktioner_checked = st.checkbox("Ytterligare instruktioner", key="order_ytterligare")
-        order_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="order_ytterligare_text")
+        order_ytterligare_instruktioner_text_input = st.text_area("Instruktioner (text)", key="order_ytterligare_text", placeholder="Ange ytterligare instruktioner")
         
         st.header("Underskrifter")
         col_u1, col_u2 = st.columns(2)
         with col_u1:
             forare_namn_input = st.text_input("Förare (namn)", key="etcs_forare")
-            utstardare_namn_input = st.text_input("Utfärdare (namn)", key="etcs_utfardare")
+            utfardare_namn1_input = st.text_input("Utfärdare (namn)", key="etcs_utfardare")
         with col_u2:
             klockslag_input = st.text_input("Klockslag", key="etcs_klock")
             ordernummer_input = st.text_input("Ordernummer", key="etcs_order")
@@ -1144,7 +1180,7 @@ def render_blankett_etcs_page():
 
     if submitted:
         form_data = {
-            "tag_nr": tag_nr_input, "datum": datum_input.strftime("%Y-%m-%d"),
+            "tag_nr": tag_nr_input, "datum": datum_input.strftime("%Y-%m-%d"), "klocka_uppe":klocka_input,
             "vid_plats": vid_plats_input, "pa_spar": pa_spar_input, "fjbc": fjbc_input,
             "stopp_passera_checked": stopp_passera_checked, "stopp_passera_km": stopp_passera_km_input,
             "stopp_fram_till_checked": stopp_fram_till_checked, "stopp_fram_till_km": stopp_fram_till_km_input,
@@ -1152,13 +1188,16 @@ def render_blankett_etcs_page():
             "stopp_ytterligare_instruktioner_text": stopp_ytterligare_instruktioner_text_input,
             "stopp_vaxlar_ratt": stopp_vaxlar_ratt_checked, "stopp_kontrollera_vaxlar": stopp_kontrollera_vaxlar_checked,
             "stopp_enligt_tsm": stopp_enligt_tsm_checked, "nodstopp_sarskilt_ansvar": nodstopp_sarskilt_ansvar_checked,
+            "nodstopp_02": nodstopp_02_checked,
             "nodstopp_skiftning": nodstopp_skiftning_checked, "nodstopp_undersoka_checked": nodstopp_undersoka_checked,
-            "nodstopp_undersoka_skal": nodstopp_undersoka_skal_input, "nodstopp_rapportera_till": nodstopp_rapportera_till_input,
+            "nodstopp_undersoka_skal": nodstopp_undersoka_skal_input, "nodstopp_rapportera_till": nodstopp_rapportera_till_input, 
+            "nodstopp_rapportera_till_checked": nodstopp_rapportera_till_checked,
             "nodstopp_ytterligare_instruktioner_checked": nodstopp_ytterligare_instruktioner_checked,
             "nodstopp_ytterligare_instruktioner_text": nodstopp_ytterligare_instruktioner_text_input,
+            "order_stastilla_03": order_stastilla_03_checked,
             "order_sta_stilla": order_sta_stilla_checked, "order_ytterligare_instruktioner_checked": order_ytterligare_instruktioner_checked,
             "order_ytterligare_instruktioner_text": order_ytterligare_instruktioner_text_input,
-            "forare_namn": forare_namn_input, "utstardare_namn": utstardare_namn_input,
+            "forare_namn": forare_namn_input, "utfardare_namn1": utfardare_namn1_input,
             "klockslag": klockslag_input, "ordernummer": ordernummer_input,
             "stopp_passagemedgivande_checked": stopp_passagemedgivande_checked
         }
