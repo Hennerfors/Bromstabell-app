@@ -419,7 +419,7 @@ def skapa_ifyllt_dokument(data):
             pdf.text(x=signal_x_coords[i][0], y=signal_y_coords[i][0], txt="X")
         if data[f"signal_{i}_name"]:
             pdf.set_font("Helvetica", "", 10)
-            pdf.text(x=signal_x_coords[i][1], y=signal_y_coords[i][1], txt=str(data.get[f"signal_{i}_name"]))
+            pdf.text(x=signal_x_coords[i][1], y=signal_y_coords[i][1], txt=str(data.get(f"signal_{i}_name")))
 
     # Fortsättning
     if data["forts_fran"]:
