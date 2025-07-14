@@ -963,12 +963,12 @@ def render_linjebocker_page():
 def render_blanketter_menu_page():
     """Visar en meny för att välja vilken blankett som ska fyllas i."""
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
-    st.header("Svenska Blanketter")
+    st.markdown("<h2 style='text-align: center;'>Svenska Blanketter</h2>", unsafe_allow_html=True)
     st.write("Välj en blankett nedan för att börja fylla i den.")
     
-    st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21, use_container_width=True)
-    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, use_container_width=True, disabled= False)
-    st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida (Under uteveckling)" , on_click=go_to_blankett_etcs_baksida, use_container_width=True, disabled= True)
+    st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21)
+    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, disabled= False)
+    st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida (Under uteveckling)" , on_click=go_to_blankett_etcs_baksida, disabled= True)
 
 
 def render_blankett_21_page():
@@ -1096,7 +1096,7 @@ def render_blankett_21_page():
         st.download_button(
             label="Ladda ner ifylld blankett 21",
             data=pdf_bytes,
-            file_name=f"ifyllt_blankett_21_{form_data['tag_spar']}.pdf",
+            file_name = f"ifylld_blankett_21_{form_data['tag_spar']}_{form_data['datum']}.pdf",
             mime="application/pdf",
         )
 
@@ -1210,7 +1210,7 @@ def render_blankett_etcs_page():
         st.download_button(
             label="Ladda ner ifylld ETCS-blankett (Framsida)",
             data=pdf_bytes,
-            file_name=f"ifyllt_etcs_framsida_{form_data['tag_nr']}.pdf",
+            file_name=f"ifylld_ETCS_Samlingsblankett_framsida_{form_data['tag_nr']}_{form_data['datum']}.pdf",
             mime="application/pdf",
         )
 
