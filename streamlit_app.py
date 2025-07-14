@@ -967,7 +967,7 @@ def render_blanketter_menu_page():
     st.write("Välj en blankett nedan för att börja fylla i den.")
     
     st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21, use_container_width=True)
-    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida (Under uteveckling)", on_click=go_to_blankett_etcs, use_container_width=True, disabled= False)
+    st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, use_container_width=True, disabled= False)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida (Under uteveckling)" , on_click=go_to_blankett_etcs_baksida, use_container_width=True, disabled= True)
 
 
