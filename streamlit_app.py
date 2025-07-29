@@ -488,7 +488,7 @@ def skapa_ifyllt_dokument(data):
         pdf.text(x=46, y=281.5, txt=str(data.get("tkl_namn")))
         pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn")))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 
 def skapa_etcs_dokument(data):
@@ -506,7 +506,7 @@ def skapa_etcs_dokument(data):
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
-        return pdf.output(dest="S").encode("latin-1")
+        return bytes(pdf.output(dest="S"))
     
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
@@ -618,7 +618,7 @@ def skapa_etcs_dokument(data):
     pdf.text(x=39.7, y=266.5, txt=str(data.get("klockslag")))
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -630,75 +630,89 @@ def skapa_etcs_baksida_dokument(data):
     
     try:
         pdf.image("blankett_etcs_baksida_bakgrund.jpg", x=0, y=0, w=210, h=297)
+        datum_obj = datetime.strptime(data["datum"], "%Y-%m-%d")
+        nytt_datum = datum_obj.strftime("%y     %m     %d")
     except RuntimeError:
         pdf.set_font("Helvetica", "B", 16)
         pdf.set_text_color(255, 0, 0)
         pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_etcs_baksida_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
-        return pdf.output(dest="S").encode("latin-1")   
+        return bytes(pdf.output(dest="S"))
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(0, 0, 0)
 
     # A: Grunduppgifter (samma som framsida)
-    pdf.text(x=68, y=41.5, txt=str(data.get["tag_nr"]))
-    pdf.text(x=138, y=41.5, txt=str(data.get["datum"]))
-    pdf.text(x=40, y=50, txt=str(data.get["vid_plats"]))
-    pdf.text(x=105, y=50, txt=str(data.get["pa_spar"]))
-    pdf.text(x=160, y=50, txt=str(data.get["fjbc"]))
+    pdf.text(x=52.09, y=41, txt=str(data.get("tag_nr")))
+    pdf.text(x=112, y=41, txt=nytt_datum)
+    pdf.text(x=145.3, y=41, txt=str(data.get("klockslag_uppe")))
+    pdf.text(x=20.59, y=53.72, txt=str(data.get("vid_plats")))
+    pdf.text(x=78.85, y=53.72, txt=str(data.get("pa_spar")))
+    pdf.text(x=106.03, y=53.72, txt=str(data.get("fjbc")))
 
     # 4: Upphävande av order
-    if data["upphavande_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=66.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=72, txt=str(data.get["upphavande_ordernr"]))
-    if data["upphavande_ytterligare_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=82.5, txt="X")
+    if data.get("upphavande04_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14, y=67.5, txt="X")
+    if data.get("upphavande_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15, y=75.54, txt="X")
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=32.32, y=75.12, txt=str(data.get("upphavande_ordernr")))
+    if data.get("upphavande_ytterligare_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15, y=83.77, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.set_xy(x=40, y=86)
-        pdf.multi_cell(w=150, h=5, txt=str(data.get["upphavande_ytterligare_text"]))
+        pdf.set_xy(x=54.76, y=78.9)
+        pdf.multi_cell(w=134.8, h=7, txt=str(data.get("upphavande_ytterligare_text")))
 
     # 5: Order om att köra med nedsatt hastighet
-    if data["nedsatt_hastighet_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=100.5, txt="X")
+    if data.get("nedsatt_hastighet05_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14, y=103.53, txt="X")
+    if data.get("nedsatt_hastighet_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15.03, y=111.7, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.text(x=82, y=105.5, txt=str(data.get["nedsatt_hastighet_kmh"]))
-        pdf.text(x=120, y=105.5, txt=str(data.get["nedsatt_hastighet_fran"]))
-        pdf.text(x=152, y=105.5, txt=str(data.get["nedsatt_hastighet_till"]))
-    
+        pdf.text(x=20, y=119.6, txt=str(data.get("nedsatt_hastighet_kmh")))
+        pdf.text(x=48.79, y=119.6, txt=str(data.get("nedsatt_hastighet_fran")))
+        pdf.text(x=108.71, y=119.6, txt=str(data.get("nedsatt_hastighet_till")))
+
     if data["nedsatt_undersoka_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=118, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=95, y=118, txt=str(data.get["nedsatt_undersoka_skal"]))
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15.03, y=128.23, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_xy(x=73.91, y=123)
+        pdf.multi_cell(w=115.5, h=7, txt=str(data.get("nedsatt_undersoka_skal")))
+
     
+    if data["nedsatt_rapportera_till_checked"]:
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15.03, y=144.28, txt="X")
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=95, y=127, txt=str(data.get["nedsatt_rapportera_till"]))
+    pdf.text(x=60.32, y=143.4, txt=str(data.get("nedsatt_rapportera_till")))
     
     if data["nedsatt_ytterligare_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=133.5, txt="X")
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=15.03, y=151.48, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.set_xy(x=40, y=137)
-        pdf.multi_cell(w=150, h=5, txt=str(data.get["nedsatt_ytterligare_text"]))
+        pdf.set_xy(x=19.3, y=154)
+        pdf.multi_cell(w=150, h=7.2, txt=str(data.get("nedsatt_ytterligare_text")))
 
     # 7: Tillstånd att starta i driftläge "särskilt ansvar"
-    if data["sarskilt_ansvar_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=148.5, txt="X")
+    if data.get("sarskilt_ansvar07_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14, y=187.5, txt="X")
+    if data.get("sarskilt_ansvar_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14.8, y=200.88, txt="X")
 
-    if data["sarskilt_ansvar_passera_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=157.5, txt="X")
-        pdf.set_font("Helvetica", "", 10); pdf.text(x=62, y=157.5, txt=str(data.get["sarskilt_ansvar_passera_text"]))
-    
-    if data["sarskilt_ansvar_ytterligare_checked"]:
-        pdf.set_font("Helvetica", "B", 12); pdf.text(x=31.5, y=166.5, txt="X")
+    if data.get("sarskilt_ansvar_passera_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14.9, y=213.5, txt="X")
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=34.8, y=212.61, txt=str(data.get("sarskilt_ansvar_passera_text")))
+
+    if data.get("sarskilt_ansvar_ytterligare_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=14.9, y=222, txt="X")
         pdf.set_font("Helvetica", "", 10)
-        pdf.set_xy(x=40, y=170)
-        pdf.multi_cell(w=150, h=5, txt=str(data.get["sarskilt_ansvar_ytterligare_text"]))
+        pdf.set_xy(x=19.35, y=223.6)
+        pdf.multi_cell(w=150, h=7.2, txt=str(data.get("sarskilt_ansvar_ytterligare_text")))
 
     # Underskrifter
     pdf.set_font("Helvetica", "", 10)
-    pdf.text(x=44, y=278, txt=str(data.get["forare_namn"]))
-    pdf.text(x=44, y=284, txt=str(data.get["utstardare_namn"]))
-    pdf.text(x=138, y=278, txt=str(data.get["klockslag"]))
-    pdf.text(x=138, y=284, txt=str(data.get["ordernummer"]))
+    pdf.text(x=35.41, y=254.6, txt=str(data.get("forare_namn")))
+    pdf.text(x=125.79, y=254.6, txt=str(data.get("utstardare_namn")))
+    pdf.text(x=29.03, y=264.07, txt=str(data.get("klockslag")))
+    pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
-    return pdf.output(dest="S").encode("latin-1")
+    return bytes(pdf.output(dest="S"))
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
@@ -967,7 +981,7 @@ def render_blanketter_menu_page():
     
     st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, disabled= False)
-    st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida (Under uteveckling)" , on_click=go_to_blankett_etcs_baksida, disabled= True)
+    st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida" , on_click=go_to_blankett_etcs_baksida, disabled= False)
 
 
 def render_blankett_21_page():
@@ -1112,7 +1126,7 @@ def render_blankett_etcs_page():
             tag_nr_input = st.text_input("Tåg/spärrfärd/växling nr", placeholder="Ange Tågnummer,spärrfärd, växlings nr..")
         with col2:
             datum_input = st.date_input("Datum")
-            klocka_input = st.text_input("Klockslag", placeholder="Ange klockslag (HH:MM)")
+            klocka_input = st.text_input("Klockslag", placeholder="Ange klockslag (HH MM)")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1220,75 +1234,80 @@ def render_blankett_etcs_baksida_page():
     st.info("Fyll i fälten nedan. De avsnitt som inte fylls i kommer lämnas tomma på den genererade PDF:en.")
 
     with st.form("blankett_etcs_baksida_form"):
-        st.header("Grunduppgifter")
+        st.header("A: Grunduppgifter")
         col1, col2 = st.columns(2)
         with col1:
-            tag_nr_input = st.text_input("Tåg/spärrfärd/växling nr")
+            tag_nr_input = st.text_input("Tåg/spärrfärd/växling nr", placeholder="Ange Tågnummer,spärrfärd, växlings nr..")
         with col2:
-            datum_input = st.date_input("Datum", value=datetime.now())
+            datum_input = st.date_input("Datum")
+            klocka_input = st.text_input("Klockslag", placeholder="Ange klockslag (HH MM)")
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            vid_plats_input = st.text_input("Vid (driftplats)")
+            vid_plats_input = st.text_input("Vid (driftplats)", placeholder="Ange driftplats")
         with col2:
-            pa_spar_input = st.text_input("På spår")
+            pa_spar_input = st.text_input("På spår", placeholder="Ange spår")
         with col3:
-            fjbc_input = st.text_input("Fjbc")
-        
+            fjbc_input = st.text_input("Fjbc", placeholder="Ange Fjbc")
+
         st.header("4. Upphävande av order")
+        upphavande04_checked = st.checkbox("Avdelning 04: Upphävande av order")
         upphavande_checked = st.checkbox("Upphäv order", key="upphavande_check")
-        upphavande_ordernr_input = st.text_input("Order nr som ska upphävas")
+        upphavande_ordernr_input = st.text_input("Order nr som ska upphävas", key="upphavande_ordernr", placeholder="Ange ordernummer som ska upphävas")
         upphavande_ytterligare_checked = st.checkbox("Ytterligare instruktioner (för upphävande)", key="upphavande_ytterligare")
-        upphavande_ytterligare_text_input = st.text_area("Instruktioner", key="upphavande_text")
+        upphavande_ytterligare_text_input = st.text_area("Instruktioner", key="upphavande_text", placeholder="Ange ytterliggare instruktioner för upphävande")
 
         st.header("5. Order om att köra med nedsatt hastighet")
+        nedsatt_hastighet05_checked = st.checkbox("Avdelning 05: Order om att köra med nedsatt hastighet")
         nedsatt_hastighet_checked = st.checkbox("Får köra med högsta hastighet", key="nedsatt_check")
         col_ns1, col_ns2, col_ns3 = st.columns(3)
         with col_ns1:
-            nedsatt_hastighet_kmh_input = st.text_input("km/tim")
+            nedsatt_hastighet_kmh_input = st.text_input("km/tim", key="nedsatt_kmh", placeholder="Ange hastighet i km/tim")
         with col_ns2:
-            nedsatt_hastighet_fran_input = st.text_input("från (km/plats)")
+            nedsatt_hastighet_fran_input = st.text_input("från (km/plats)", key="nedsatt_fran", placeholder="Ange från (km/plats)")
         with col_ns3:
-            nedsatt_hastighet_till_input = st.text_input("till (km/plats)")
+            nedsatt_hastighet_till_input = st.text_input("till (km/plats)", key="nedsatt_till", placeholder="Ange till (km/plats)")
 
-        nedsatt_undersoka_checked = st.checkbox("Ska undersöka banan", key="nedsatt_undersoka_check")
-        nedsatt_undersoka_skal_input = st.text_input("av följande skäl")
-        nedsatt_rapportera_till_input = st.text_input("Ska rapportera resultatet till (tsm/htsm)")
+        nedsatt_undersoka_checked = st.checkbox("Ska undersöka banan av följade skäl", key="nedsatt_undersoka_check")
+        nedsatt_undersoka_skal_input = st.text_input("Skall undersöka", placeholder="Ange skäl för undersökning")
+        nedsatt_rapportera_till_checked = st.checkbox("Ska rapportera resultatet till", key="nedsatt_rapportera_till_check")
+        nedsatt_rapportera_till_input = st.text_input("Ska rapportera resultatet till", placeholder="Ange rapportera resultatet till")
 
         nedsatt_ytterligare_checked = st.checkbox("Ytterligare instruktioner (för nedsatt hastighet)", key="nedsatt_ytterligare")
-        nedsatt_ytterligare_text_input = st.text_area("Instruktioner", key="nedsatt_text")
+        nedsatt_ytterligare_text_input = st.text_area("Instruktioner", key="nedsatt_text", placeholder="Ange ytterligare instruktioner för nedsatt hastighet")
         
         st.header("7. Tillstånd att starta i driftläge 'särskilt ansvar'")
+        sarskilt_ansvar07_checked = st.checkbox("Avdelning 07: Tillstånd att starta i driftläge 'särskilt ansvar'")
         sarskilt_ansvar_checked = st.checkbox("Har tillstånd att starta i driftläge 'särskilt ansvar' efter aktivering")
         
         sarskilt_ansvar_passera_checked = st.checkbox("Får passera", key="sa_passera_check")
-        sarskilt_ansvar_passera_text_input = st.text_input("... (km/tavla/signal)")
+        sarskilt_ansvar_passera_text_input = st.text_input("... (km/tavla/signal)", key="sa_passera_text", placeholder="Ange (km/tavla/signal)")
 
         sarskilt_ansvar_ytterligare_checked = st.checkbox("Ytterligare instruktioner (för särskilt ansvar)", key="sa_ytterligare")
-        sarskilt_ansvar_ytterligare_text_input = st.text_area("Instruktioner", key="sa_text")
+        sarskilt_ansvar_ytterligare_text_input = st.text_area("Instruktioner", key="sa_text", placeholder="Ange ytterligare instruktioner för särskilt ansvar")
 
         st.header("Underskrifter")
         col_u1, col_u2 = st.columns(2)
         with col_u1:
-            forare_namn_input = st.text_input("Förare (namn)", key="baksida_forare")
-            utstardare_namn_input = st.text_input("Utfärdare (namn)", key="baksida_utfardare")
+            forare_namn_input = st.text_input("Förare (namn)", key="baksida_forare", placeholder="Ange förarens namn")
+            utstardare_namn_input = st.text_input("Utfärdare (namn)", key="baksida_utfardare", placeholder="Ange utfärdarens namn")
         with col_u2:
-            klockslag_input = st.text_input("Klockslag", key="baksida_klock")
-            ordernummer_input = st.text_input("Ordernummer", key="baksida_order")
+            klockslag_input = st.text_input("Klockslag", key="baksida_klock", placeholder="Ange klockslag")
+            ordernummer_input = st.text_input("Ordernummer", key="baksida_order", placeholder="Ange ordernummer")
 
         submitted = st.form_submit_button("Skapa ifylld ETCS-blankett (Baksida)")
 
     if submitted:
         form_data = {
-            "tag_nr": tag_nr_input, "datum": datum_input.strftime("%Y-%m-%d"),
+            "tag_nr": tag_nr_input, "datum": datum_input.strftime("%Y-%m-%d"), "klockslag_uppe": klocka_input,
             "vid_plats": vid_plats_input, "pa_spar": pa_spar_input, "fjbc": fjbc_input,
-            "upphavande_checked": upphavande_checked, "upphavande_ordernr": upphavande_ordernr_input,
+            "upphavande04_checked": upphavande04_checked, "upphavande_checked": upphavande_checked, "upphavande_ordernr": upphavande_ordernr_input,
             "upphavande_ytterligare_checked": upphavande_ytterligare_checked, "upphavande_ytterligare_text": upphavande_ytterligare_text_input,
-            "nedsatt_hastighet_checked": nedsatt_hastighet_checked, "nedsatt_hastighet_kmh": nedsatt_hastighet_kmh_input,
+            "nedsatt_hastighet05_checked": nedsatt_hastighet05_checked, "nedsatt_hastighet_checked": nedsatt_hastighet_checked, "nedsatt_hastighet_kmh": nedsatt_hastighet_kmh_input,
             "nedsatt_hastighet_fran": nedsatt_hastighet_fran_input, "nedsatt_hastighet_till": nedsatt_hastighet_till_input,
-            "nedsatt_undersoka_checked": nedsatt_undersoka_checked, "nedsatt_undersoka_skal": nedsatt_undersoka_skal_input,
-            "nedsatt_rapportera_till": nedsatt_rapportera_till_input, "nedsatt_ytterligare_checked": nedsatt_ytterligare_checked,
-            "nedsatt_ytterligare_text": nedsatt_ytterligare_text_input, "sarskilt_ansvar_checked": sarskilt_ansvar_checked,
+            "nedsatt_undersoka_checked": nedsatt_undersoka_checked, "nedsatt_undersoka_skal": nedsatt_undersoka_skal_input, 
+            "nedsatt_rapportera_till_checked": nedsatt_rapportera_till_checked, "nedsatt_rapportera_till": nedsatt_rapportera_till_input, "nedsatt_ytterligare_checked": nedsatt_ytterligare_checked,
+            "nedsatt_ytterligare_text": nedsatt_ytterligare_text_input, "sarskilt_ansvar07_checked": sarskilt_ansvar07_checked, "sarskilt_ansvar_checked": sarskilt_ansvar_checked,
             "sarskilt_ansvar_passera_checked": sarskilt_ansvar_passera_checked, "sarskilt_ansvar_passera_text": sarskilt_ansvar_passera_text_input,
             "sarskilt_ansvar_ytterligare_checked": sarskilt_ansvar_ytterligare_checked,
             "sarskilt_ansvar_ytterligare_text": sarskilt_ansvar_ytterligare_text_input,
@@ -1303,7 +1322,7 @@ def render_blankett_etcs_baksida_page():
         st.download_button(
             label="Ladda ner ifylld ETCS-blankett (Baksida)",
             data=pdf_bytes,
-            file_name=f"ifyllt_etcs_baksida_{form_data['tag_nr']}.pdf",
+            file_name=f"ifylld_ETCS_Samlingsblankett_baksida_{form_data['tag_nr']}_{form_data['datum']}.pdf",
             mime="application/pdf",
         )
 
