@@ -489,11 +489,7 @@ def skapa_ifyllt_dokument(data):
         pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn")))
 
     result = pdf.output(dest="S")
-    if isinstance(result, bytearray):
-        return bytes(result)
-    return result
-
-
+    return bytes(result)
 def skapa_etcs_dokument(data):
     """
     Skapar en ifylld ETCS Samlingsblankett E2/E3 baserat på användardata.
@@ -622,9 +618,7 @@ def skapa_etcs_dokument(data):
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
-    if isinstance(result, bytearray):
-        return bytes(result)
-    return result
+    return bytes(result)
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -719,9 +713,7 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
-    if isinstance(result, bytearray):
-        return bytes(result)
-    return result
+    return bytes(result)
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
