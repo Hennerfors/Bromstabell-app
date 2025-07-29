@@ -488,8 +488,8 @@ def skapa_ifyllt_dokument(data):
         pdf.text(x=46, y=281.5, txt=str(data.get("tkl_namn")))
         pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn")))
 
-result = pdf.output(dest="S")
-return result.encode("latin1")
+    result = pdf.output(dest="S")
+    return result.encode("latin1")
 
 def skapa_etcs_dokument(data):
     """
@@ -618,8 +618,8 @@ def skapa_etcs_dokument(data):
     pdf.text(x=39.7, y=266.5, txt=str(data.get("klockslag")))
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
-result = pdf.output(dest="S")
-return result.encode("latin1")
+    result = pdf.output(dest="S")
+    return result.encode("latin1")
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -713,8 +713,8 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=29.03, y=264.07, txt=str(data.get("klockslag")))
     pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
-result = pdf.output(dest="S")
-return result.encode("latin1")
+    result = pdf.output(dest="S")
+    return result.encode("latin1")
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
