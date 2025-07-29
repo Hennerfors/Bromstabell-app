@@ -712,7 +712,10 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=29.03, y=264.07, txt=str(data.get("klockslag")))
     pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
-    return bytes(pdf.output(dest="S"))
+    result = pdf.output(dest="S")
+    if isinstance(result, bytearray):
+        return bytes(result)
+    return result
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
