@@ -1111,7 +1111,7 @@ def render_blankett_21_page():
         st.download_button(
             label="Ladda ner ifylld blankett 21",
             data=pdf_bytes,
-            file_name=f"ifylld_Blankett_21_{form_data['tag_nr']}_{form_data['datum']}.pdf",
+            file_name=f"ifylld_Blankett_21_{form_data['tag_spar']}_{form_data['datum']}.pdf",
             mime="application/pdf",
         )
 
