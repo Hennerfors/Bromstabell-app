@@ -618,7 +618,10 @@ def skapa_etcs_dokument(data):
     pdf.text(x=39.7, y=266.5, txt=str(data.get("klockslag")))
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
-    return bytes(pdf.output(dest="S"))
+    result = pdf.output(dest="S")
+    if isinstance(result, bytearray):
+        return bytes(result)
+    return result
 
 
 def skapa_etcs_baksida_dokument(data):
