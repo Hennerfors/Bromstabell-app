@@ -488,7 +488,10 @@ def skapa_ifyllt_dokument(data):
         pdf.text(x=46, y=281.5, txt=str(data.get("tkl_namn")))
         pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn")))
 
-    return bytes(pdf.output(dest="S"))
+    result = pdf.output(dest="S")
+    if isinstance(result, bytearray):
+        return bytes(result)
+    return result
 
 
 def skapa_etcs_dokument(data):
