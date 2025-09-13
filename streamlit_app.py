@@ -15,43 +15,43 @@ from datetime import datetime
 # ==============================================================================
 HASTIGHETS_DATA = {
     'A': {
-        (0, 100): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 138, 130), (139, 143, 140), (144, -1, 150)],
-        (101, 200): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 103, 110), (104, 124, 120), (125, 146, 130), (147, -1, 140)],
-        (201, 300): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 107, 110), (108, 129, 120), (130, 153, 130), (154, -1, 140)],
-        (301, 400): [ (0, 60, 60), (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 87, 100), (88, 109, 110), (110, 129, 120), (130, -1, 130)],
-        (401, 460): [ (0, 60, 60), (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 90, 100), (91, 109, 110), (110, 132, 120), (133, -1, 130)],
-        (461, 520): [ (0, 60, 60), (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 93, 100), (94, 116, 110), (117, 143, 120), (144, -1, 130)],
-        (521, 570): [ (0, 60, 60), (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 97, 100), (98, 119, 110), (120, -1, 120)],
-        (571, 620): [ (0, 60, 60), (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 100, 100), (101, 129, 110), (130, -1, 120)],
-        (621, 670): [ (0, 60, 60), (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 104, 100), (105, 134, 110), (135, -1, 120)],
-        (671, 710): [ (0, 60, 40), (61, 62, 50), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, 109, 100), (110, -1, 110)],
-        (711, 750): [ (0, 64, 40), (65, 65, 50), (66, 66, 60), (67, 68, 70), (69, 82, 80), (83, 87, 90), (88, 90, 100), (91, -1, 110)]
+        (0, 100): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 138, 130), (139, 143, 170), (144, 154, 200)],
+        (101, 200): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 103, 110), (104, 124, 120), (125, 146, 130), (147, 154, 200)],
+        (201, 300): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 107, 110), (108, 129, 120), (130, 153, 130), (154, 154, 200)],
+        (301, 400): [ (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 87, 100), (88, 109, 110), (110, 129, 120), (130, 154, 130)],
+        (401, 460): [ (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 90, 100), (91, 109, 110), (110, 132, 120), (133, 154, 130)],
+        (461, 520): [ (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 93, 100), (94, 116, 110), (117, 143, 120), (144, 154, 130)],
+        (521, 570): [ (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 97, 100), (98, 119, 110), (120, 154, 120)],
+        (571, 620): [ (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 100, 100), (101, 129, 110), (130, 154, 120)],
+        (621, 670): [ (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 104, 100), (105, 134, 110), (135, 154, 120)],
+        (671, 710): [ (61, 62, 40), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, 109, 100), (110, 154, 110)],
+        (711, 750): [ (65, 65, 40), (66, 66, 50), (67, 68, 60), (69, 82, 70), (83, 87, 80), (88, 90, 90), (91, 154, 100)]
     },
     'B': {
-        (0, 100): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 121, 130), (122, 124, 140), (125, 134, 150), (135, 143, 160), (144, -1, 170)],
-        (101, 200): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 103, 110), (104, 124, 120), (125, 126, 130), (127, 137, 140), (138, 146, 150), (147, -1, 160)],
-        (201, 300): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 107, 110), (108, 129, 120), (130, 140, 140), (141, 150, 150), (151, -1, 160)],
-        (301, 400): [ (0, 60, 60), (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 87, 100), (88, 109, 110), (110, 129, 120), (130, 132, 130), (133, 143, 140), (144, 153, 150), (154, -1, 160)],
-        (401, 460): [ (0, 60, 60), (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 90, 100), (91, 109, 110), (110, 132, 120), (133, 134, 130), (135, 136, 140), (137, 147, 150), (148, -1, 160)],
-        (461, 520): [ (0, 60, 60), (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 93, 100), (94, 116, 110), (117, 143, 120), (144, 150, 140), (151, -1, 150)],
-        (521, 570): [ (0, 60, 60), (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 97, 100), (98, 119, 110), (120, -1, 120)],
-        (571, 620): [ (0, 60, 60), (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 100, 100), (101, 129, 110), (130, -1, 120)],
-        (621, 670): [ (0, 60, 60), (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 104, 100), (105, 134, 110), (135, -1, 120)],
-        (671, 710): [ (0, 60, 40), (61, 62, 50), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, 109, 100), (110, -1, 110)],
-        (711, 750): [ (0, 64, 40), (65, 65, 50), (66, 66, 60), (67, 68, 70), (69, 82, 80), (83, 87, 90), (88, 90, 100), (91, -1, 110)]
+        (0, 100): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 99, 110), (100, 118, 120), (119, 121, 140), (122, 124, 150), (125, 134, 160), (135, 143, 170), (144, 154, 200)],
+        (101, 200): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 103, 110), (104, 124, 120), (125, 126, 150), (127, 137, 160), (138, 146, 170), (147, 154, 200)],
+        (201, 300): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 85, 100), (86, 107, 110), (108, 129, 120), (130, 140, 160), (141, 150, 170), (151, 154, 200)],
+        (301, 400): [ (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 87, 100), (88, 109, 110), (110, 129, 120), (130, 132, 150), (133, 143, 160), (144, 153, 170), (154, 154, 200)],
+        (401, 460): [ (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 90, 100), (91, 109, 110), (110, 132, 120), (133, 134, 140), (135, 136, 150), (137, 147, 160), (148, 154, 170)],
+        (461, 520): [ (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 93, 100), (94, 116, 110), (117, 143, 120), (144, 150, 160), (151, 154, 170)],
+        (521, 570): [ (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 97, 100), (98, 119, 110), (120, 154, 120)],
+        (571, 620): [ (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 100, 100), (101, 129, 110), (130, 154, 120)],
+        (621, 670): [ (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 104, 100), (105, 134, 110), (135, 154, 120)],
+        (671, 710): [ (61, 62, 40), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, 109, 100), (110, 154, 110)],
+        (711, 750): [ (65, 65, 40), (66, 66, 50), (67, 68, 60), (69, 82, 70), (83, 87, 80), (88, 90, 90), (91, 154, 100)]
     },
-    'C': {
-        (0, 100): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 97, 100), (98, 112, 110), (113, 121, 120), (122, 124, 130), (125, 134, 140), (135, 143, 150), (144, -1, 160)],
-        (101, 200): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 99, 100), (100, 115, 110), (116, 124, 120), (125, 126, 130), (127, 137, 140), (138, 146, 150), (147, -1, 160)],
-        (201, 300): [ (0, 60, 60), (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 102, 100), (103, 118, 110), (119, 126, 120), (127, 129, 130), (130, 140, 140), (141, 150, 150), (151, -1, 160)],
-        (301, 400): [ (0, 60, 60), (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 103, 100), (104, 119, 110), (120, 129, 120), (130, 132, 130), (133, 143, 140), (144, 153, 150), (154, -1, 160)],
-        (401, 460): [ (0, 60, 60), (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 106, 100), (107, 122, 110), (123, 134, 120), (135, 136, 130), (137, 147, 140), (148, -1, 150)],
-        (461, 520): [ (0, 60, 60), (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 107, 100), (108, 126, 110), (127, 137, 120), (138, 140, 130), (141, 150, 140), (151, -1, 150)],
-        (521, 570): [ (0, 60, 60), (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 111, 100), (112, 129, 110), (130, 143, 120), (144, -1, 130)],
-        (571, 620): [ (0, 60, 60), (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 113, 100), (114, 134, 110), (135, 150, 120), (151, -1, 130)],
-        (621, 670): [ (0, 60, 60), (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 116, 100), (117, 141, 110), (142, -1, 120)],
-        (671, 710): [ (0, 60, 40), (61, 62, 50), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, -1, 100)],
-        (711, 750): [ (0, 64, 40), (65, 65, 50), (66, 66, 60), (67, 68, 70), (69, 82, 80), (83, 87, 90), (88, 90, 100), (91, -1, 110)]
+    'C': { #Kålla igenom denna tabell noga C och neråt
+        (0, 100): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 97, 100), (98, 112, 110), (113, 121, 120), (122, 124, 130), (125, 134, 140), (135, 143, 150), (144, -1, 160)],
+        (101, 200): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 99, 100), (100, 115, 110), (116, 124, 120), (125, 126, 130), (127, 137, 140), (138, 146, 150), (147, -1, 160)],
+        (201, 300): [ (61, 66, 70), (67, 71, 80), (72, 72, 90), (73, 102, 100), (103, 118, 110), (119, 126, 120), (127, 129, 130), (130, 140, 140), (141, 150, 150), (151, -1, 160)],
+        (301, 400): [ (61, 68, 70), (69, 72, 80), (73, 74, 90), (75, 103, 100), (104, 119, 110), (120, 129, 120), (130, 132, 130), (133, 143, 140), (144, 153, 150), (154, -1, 160)],
+        (401, 460): [ (61, 69, 70), (70, 72, 80), (73, 75, 90), (76, 106, 100), (107, 122, 110), (123, 134, 120), (135, 136, 130), (137, 147, 140), (148, -1, 150)],
+        (461, 520): [ (61, 71, 70), (72, 72, 80), (73, 75, 90), (76, 107, 100), (108, 126, 110), (127, 137, 120), (138, 140, 130), (141, 150, 140), (151, -1, 150)],
+        (521, 570): [ (61, 72, 70), (73, 75, 80), (76, 78, 90), (79, 111, 100), (112, 129, 110), (130, 143, 120), (144, -1, 130)],
+        (571, 620): [ (61, 75, 70), (76, 78, 80), (79, 79, 90), (80, 113, 100), (114, 134, 110), (135, 150, 120), (151, -1, 130)],
+        (621, 670): [ (61, 77, 70), (78, 79, 80), (80, 82, 90), (83, 116, 100), (117, 141, 110), (142, -1, 120)],
+        (671, 710): [ (61, 62, 50), (63, 64, 60), (65, 79, 70), (80, 82, 80), (83, 87, 90), (88, -1, 100)],
+        (711, 750): [ (65, 65, 50), (66, 66, 60), (67, 68, 70), (69, 82, 80), (83, 87, 90), (88, 90, 100), (91, -1, 110)]
     },
     'D': {
         (0, 100):   [ (0, 28, 0), (29, 30, 40), (31, 32, 50), (33, 35, 60), (36, 38, 70), (39, 41, 80), (42, 44, 90), (45, 48, 100), (49, 52, 110), (53, 56, 120), (57, 60, 130), (61, 64, 140), (65, -1, 150) ],
@@ -716,6 +716,87 @@ def skapa_etcs_baksida_dokument(data):
     result = pdf.output(dest="S")
     return result.encode("latin1")
 
+# --- Blankett 22 Framsida ---
+def skapa_blankett_22_framsida_dokument(data):
+    """
+    Skapar en ifylld PDF för Blankett 22 - Framsida baserat på användardata.
+    Använder den tomma blanketten som bakgrundsbild.
+    """
+    pdf = FPDF(orientation="L", unit="mm", format="A4")  # L = Landscape
+    pdf.add_page()
+    try:
+        pdf.image("blankett_22_framsida_bakgrund.jpg", x=0, y=0, w=297, h=210)
+    except RuntimeError:
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.set_text_color(255, 0, 0)
+        pdf.cell(0, 10, "FEL: Bakgrundsbilden 'blankett_22_framsida_bakgrund.jpg' kunde inte laddas.", ln=True, align='C')
+        return bytes(pdf.output(dest="S"))
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(0, 0, 0)
+
+    # Grunduppgifter Blankett 22 Framsida
+    if data.get("tag_nr_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=32.90, y=33.5, txt="X")
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=42.68, y=32.63, txt=str(data.get("tag_nr_text", "")))
+
+    if data.get("sparrfard_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=67.1, y=33.4, txt="X")
+        pdf.set_font("Helvetica", "", 10); pdf.text(x=84.74, y=32.63, txt=str(data.get("sparrfard_text", "")))
+
+    pdf.set_font("Helvetica", "", 10); pdf.text(x=121.08, y=32.63, txt=str(data.get("datum", "")))
+    pdf.text(x=150, y=40, txt=str(data.get("klockslag_uppe", "")))
+
+    if data.get("trafikplatsen_checked"):
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=20, y=60, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=30, y=60, txt=str(data.get("vid_plats", "")))
+
+    if data.get("pa_strackan_checked"):
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.text(x=20, y=70, txt="X")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.text(x=30, y=70, txt=str(data.get("vid_plats", "")))
+
+    if data.get("uppspar_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=100, y=60, txt="X")
+    if data.get("nedspar_checked"):
+        pdf.set_font("Helvetica", "B", 12); pdf.text(x=100, y=70, txt="X")
+
+
+    # --- Koordinater för körplanrader (justera efter din blankettlayout) ---
+    KORPLAN_COORDS = [
+        (20, 120, 60, 120, 100, 120, 140, 120),
+        (20, 128, 60, 128, 100, 128, 140, 128),
+        (20, 136, 60, 136, 100, 136, 140, 136),
+        (20, 144, 60, 144, 100, 144, 140, 144),
+        (20, 152, 60, 152, 100, 152, 140, 152),
+        (20, 160, 60, 160, 100, 160, 140, 160),
+        (20, 168, 60, 168, 100, 168, 140, 168),
+        (20, 176, 60, 176, 100, 176, 140, 176),
+        (20, 184, 60, 184, 100, 184, 140, 184),
+        (20, 192, 60, 192, 100, 192, 140, 192),
+    ]
+    for i in range(10):
+        trafikplats = data.get(f"trafikplats{i+1:02d}_input", "")
+        ankomst = data.get(f"ankomst{i+1:02d}_input", "")
+        avgang = data.get(f"avgang{i+1:02d}_input", "")
+        ovrigt = data.get(f"ovrigt{i+1:02d}_input", "")
+        x1, y1, x2, y2, x3, y3, x4, y4 = KORPLAN_COORDS[i]
+        pdf.text(x=x1, y=y1, txt=trafikplats)
+        pdf.text(x=x2, y=y2, txt=ankomst)
+        pdf.text(x=x3, y=y3, txt=avgang)
+        pdf.text(x=x4, y=y4, txt=ovrigt)
+    # ...existing code... 
+
+    # ...i slutet av skapa_ifyllt_dokument...
+    result = pdf.output(dest="S")
+    if isinstance(result, str):
+        return result.encode("latin1")
+    else:
+        return bytes(result)
+
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
 # ==============================================================================
@@ -731,6 +812,7 @@ def go_to_blanketter_menu(): st.session_state.page = 'blanketter_menu'
 def go_to_blankett_21(): st.session_state.page = 'blankett_21'
 def go_to_blankett_etcs(): st.session_state.page = 'blankett_etcs'
 def go_to_blankett_etcs_baksida(): st.session_state.page = 'blankett_etcs_baksida'
+def go_to_blankett_22_framsida(): st.session_state.page = 'blankett_22_framsida'
 
 
 def render_main_page():
@@ -984,6 +1066,7 @@ def render_blanketter_menu_page():
     st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, disabled= False)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida" , on_click=go_to_blankett_etcs_baksida, disabled= False)
+    st.button("📝 Blankett 22 - Framsidan" , on_click=go_to_blankett_22_framsida, disabled= False)
 
 
 def render_blankett_21_page():
@@ -1327,6 +1410,257 @@ def render_blankett_etcs_baksida_page():
             file_name=f"ifylld_ETCS_Samlingsblankett_baksida_{form_data['tag_nr']}_{form_data['datum']}.pdf",
             mime="application/pdf",
         )
+#Bygger för att skapa en ifylld Blankett 22 - Framsida
+def render_blankett_22_framsida_page():
+    """Renderar formuläret för att fylla i Blankett 22 (framsida)."""
+    st.button("⬅️ Tillbaka till blankettmenyn", on_click=go_to_blanketter_menu)
+    st.title("Fylla i Blankett 22 - Framsida")
+    st.info("Fyll i fälten nedan. De avsnitt som inte fylls i kommer lämnas tomma på den genererade PDF:en.")
+
+    with st.form("blankett_22_framsida_form"):
+        st.header("A: Grunduppgifter")
+        col1, col2 = st.columns(2)
+        with col1:
+            tag_nr_checked = st.checkbox("Tåg", key="tag_nr_checked")
+            tag_nr_text22_input = st.text_input("Tåg", placeholder="Ange Tågnummer")
+            datum22_input = st.date_input("Datum")
+        with col2:
+            sparrfard_checked = st.checkbox("Spärrfärd", key="sparrfard_checked")
+            sparrfard_text_input = st.text_input("Spärrfärd", placeholder="Ange Spärrfärd")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            trakfikplats_checked = st.checkbox("Vid trafikplatsen", key="trafikplatsen_checked")
+            pa_strackan_checked = st.checkbox("På sträckan", key="pa_strackan_checked")
+        with col2:    
+            vid_plats_input = st.text_input("På trafikplatsen eller sträckan", placeholder="Ange Trafikplats eller sträcka...")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            km_checked = st.checkbox("Vid Kilometer", key="km_checked")
+            km_input = st.text_input("Kilometer", placeholder="Ange Km...")
+            uppspar_checked = st.checkbox("Uppspår", key="uppspar_checked")
+            nedspar_checked = st.checkbox("Nedspår", key="nedspar_checked")
+            spar_checked = st.checkbox("Spår", key="spar_checked")
+            spar_input = st.text_input("Spår", placeholder="Ange Spår...")
+
+        with col2:
+            km_mellan_checked = st.checkbox("Mellan Kilometer", key="km_mellan_checked")
+            km_mellan_input = st.text_input("Mellan Kilometer", placeholder="Ange mellan kilometer")
+            km_mellan_input2 = st.text_input("Och Kilometer", placeholder="& kilometer....")
+
+        st.header("2. Hastighetsnedsättning")
+        
+
+        col1, col2 = st.columns(2)
+        with col1:
+            hastighetsnedsattning_checked = st.checkbox("2.Hastighetsnedsättning", key="hastighetsnedsattning_checked")
+            sth_input = st.text_input("STH (km/tim)", placeholder="Ange STH i km/tim", key="sth_input")
+
+        with col2:
+            orsak_checked = st.checkbox("Orsak", key="orsak_checked")
+            orsak_input = st.text_input("Orsak", placeholder="Ange orsak till hastighetsnedsättning", key="orsak_input")
+
+        col1, col2 = st.columns(2)
+        with col1:    
+            helutr_checked = st.checkbox("Helutrustad", key="helutrustad_checked")
+            ej_atp_checked = st.checkbox("Ingår ej i tågskyddsystemet", key="ej_atp_checked")
+            punktned_checked = st.checkbox("Punktnedsättning", key="punktned_checked")
+            
+
+        with col2:
+            halvutr_checked = st.checkbox("Halvutrustad", key="halvutrustad_checked")
+            utan_signal_checked = st.checkbox("Utan signalering", key="utan_signal_checked")
+            punktned_text_input = st.text_input("Punktnedsättning", placeholder="Ange punktnedsättning", key="punktned_text_input")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            nedsträcka_checked = st.checkbox("Nedsättningssträckan kan varieras. Största tillåtna hastighet ... km/tim och ... km/tim förekommer.", key="nedstrackan_checked")
+            nedstracka_input = st.text_input("Nedsättningssträckan kan varieras", placeholder="Ange STH: Km/tim och Km/tim", key="nedstracka_input")        
+            arbete_input = st.text_input("Arbete bedrivs i riktning från km ... mot km ...", placeholder="Ange riktning från km mot km", key="arbete_input")
+
+        st.header("3. Plankorsning")    
+        col1, col2 = st.columns(2)
+        with col1:
+            plankorsning_checked = st.checkbox("3.Plankorsning", key="plankorsning_checked")
+            vag_felaktig_checked = st.checkbox("Är vägskyddsanläggningen felaktig", key="vag_felaktig_checked")
+            v_forsignal_checked = st.checkbox("kan V-försignalen vara släckt", key="v_forsignal_checked")
+            v_signalfel_checked = st.checkbox("Är V-signalen felaktig", key="v_signalfel_checked")
+
+        with col2:
+            plankorsning_input = st.text_input("Plankorsning:", placeholder="Ange plankorsning", key="plankorsning_input")
+            vagvakt_checked = st.checkbox("Finns vägvakt", key="vagvakt_checked")
+
+
+        st.header("4. Felaktig signal")
+        felsignal_checked = st.checkbox("4.Felaktig signal", key="felsignal_checked")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            fel_infsi_checked = st.checkbox("Infsi", key="fel_infsi_checked")
+            fel_infsi_input = st.text_input("Infartssignal:", placeholder="Ange Infsi", key="fel_infsi_input")
+            fel_utfsi_checked = st.checkbox("Utfsi", key="fel_utfsi_checked")
+            fel_utfsi_input = st.text_input("Utfartsignal:", placeholder="Ange Utfsi", key="fel_utfsi_input")
+
+        with col2:
+            fel_msi_checked = st.checkbox("Msi", key="fel_msi_checked")
+            fel_msi_input = st.text_input("Mellansignal:", placeholder="Ange Msi", key="fel_msi_input")
+            fel_fsi_checked = st.checkbox("Försignal till", key="fel_fsi_checked")
+            fel_fsi_input = st.text_input("Försignal till:", placeholder="Ange Försignal till", key="fel_fsi_input")
+
+        with col3:
+            fel_ublsi_checked = st.checkbox("Ublsi", key="fel_ublsi_checked")
+            fel_ublsi_input = st.text_input("Utfartsblocksignal:", placeholder="Ange Ublsi", key="fel_ublsi_input")
+
+
+        st.header("5. Tågskyddssystem")    
+        tagskydd_checked = st.checkbox("5.Tågskyddssystem", key="tagskydd_checked")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            systemnod_checked = st.checkbox("Systemnod", key="systemnod_checked")
+            st.write("ATC-information som lämnas:")
+
+
+        with col2: 
+            balis_info_checked = st.checkbox("Balisinformation", key="balis_info_checked") 
+            col_atc1, col_atc2 = st.columns(2)
+            with col_atc1:
+                atc_stopp_checked = st.checkbox("Stopp", key="atc_stopp_checked")
+            with col_atc2:
+                atc_vanta_stopp_checked = st.checkbox("Vänta stopp", key="atc_vanta_stopp_checked")
+
+        with col3:
+            balis_overrfel_checked = st.checkbox("Överföringsfel", key="balis_overrfel_checked")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            plats5_input = st.text_input("Vid:", placeholder="Ange vid...", key="plats5_input")
+
+
+        st.header("6. Tågorder")    
+        tagorder_checked = st.checkbox("6.Tågorder", key="tagorder_checked")
+        tagordertxt_input = st.text_input("Tåget får gå utan tågorder till:", placeholder="Ange slutpunkt", key="tagorder_text_input")
+
+        st.header("7. Uppehåll")
+        uppehall7_checked = st.checkbox("7.Uppehåll", key="uppehall7_checked")
+        col1, col2 = st.columns(2)
+        with col1:
+            uppehall_checked = st.checkbox("Uppehåll", key="uppehall_checked")
+            uppehall_borta_checked = st.checkbox("Uppehållet bortfaller", key="uppehall_borta_checked")
+        with col2:
+            uppehallet_trafikbyte_checked = st.checkbox("Uppehållet avsett för trafikutbyte", key="uppehallet_trafikbyte_checked")
+
+        st.header("8. Stopplats")
+        stopplats8_checked = st.checkbox("8.Stopplats", key="stopplats8_checked")
+        stopplats_vid_input = st.text_input("Stopplats vid:", placeholder="Ange stopplats vid...", key="stopplats_vid_input")
+
+        st.header("9. Körplan")
+        korplan9_checked = st.checkbox("9.Körplan", key="korplan9_checked")
+
+        # Använd mindre mellanrum mellan kolumnerna
+        # Skapa 10 rader för varje kolumn i körplanen
+        col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 2], gap="small")
+        trafikplats_inputs = []
+        ankomst_inputs = []
+        avgang_inputs = []
+        ovrigt_inputs = []
+        for i in range(1, 11):
+            with col1:
+                trafikplats_inputs.append(
+                    st.text_input(
+                        "Trafikplats:" if i == 1 else "",
+                        placeholder="Ange trafikplats...",
+                        key=f"trafikplats{i:02d}_input",
+                        label_visibility="visible" if i == 1 else "collapsed"
+                    )
+                )
+            with col2:
+                ankomst_inputs.append(
+                    st.text_input(
+                        "Ankomst:" if i == 1 else "",
+                        placeholder="Ankomst tid",
+                        key=f"ankomst{i:02d}_input",
+                        label_visibility="visible" if i == 1 else "collapsed"
+                    )
+                )
+            with col3:
+                avgang_inputs.append(
+                    st.text_input(
+                        "Avgång:" if i == 1 else "",
+                        placeholder="Avgång tid",
+                        key=f"avgang{i:02d}_input",
+                        label_visibility="visible" if i == 1 else "collapsed"
+                    )
+                )
+            with col4:
+                ovrigt_inputs.append(
+                    st.text_input(
+                        "Övrigt:" if i == 1 else "",
+                        placeholder="Ange övrigt...",
+                        key=f"ovrigt{i:02d}_input",
+                        label_visibility="visible" if i == 1 else "collapsed"
+                    )
+                )
+
+        st.header("10. Övrigt")
+        ovrigt10_checked = st.checkbox("10.Övrigt", key="ovrigt10_checked")
+        ovrigt2_inputs = st.text_area("Ange övrigt...", placeholder="Ange övrigt här...", key="ovrigt2_input")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            ordernummer22_input = st.text_input("Ordernummer:", placeholder="Ange ordernummer här...", key="ordernummer22_input")
+            fjbc22_input = st.text_input("Dp/fjbc:", placeholder="Ange Dp/fjbc", key="fjbc22_input")
+            forare22_input = st.text_input("Förare/tsm:", placeholder="Ange Förare/tsm", key="forare22_input")
+        with col2:
+            klockslag22_input = st.text_input("Klockslag:", placeholder="Ange klockslag (HH:MM)", key="klockslag22_input")
+            tkl22_input = st.text_input("Tkl:", placeholder="Ange Tkl", key="tkl22_input")
+            
+
+        submitted = st.form_submit_button("Skapa ifylld Blankett 22 (Framsida)")
+
+        if submitted:
+            form_data = {
+                "tag_nr_checked": tag_nr_checked, "tag_nr_text": tag_nr_text22_input, "sparrfard_checked": sparrfard_checked, 
+                "sparrfard_text": sparrfard_text_input, "datum": datum22_input.strftime("%Y-%m-%d"), "trafikplatsen_checked": trakfikplats_checked,
+                "pa_strackan_checked": pa_strackan_checked, "vid_plats": vid_plats_input,
+                "km_checked": km_checked, "km_text": km_input, "km_mellan_checked": km_mellan_checked, "km_mellan_text": km_mellan_input, "km_mellan_text2": km_mellan_input2,
+                "uppspar_checked": uppspar_checked, "nedspar_checked": nedspar_checked, "spar_checked": spar_checked, "spar_text": spar_input,
+                "hastighetsnedsattning_checked": hastighetsnedsattning_checked, "sth_text": sth_input, "orsak_checked": orsak_checked, 
+                "orsak_text": orsak_input, "helutrustad_checked": helutr_checked, "halvutr_checked": halvutr_checked, "ej_atp_checked": ej_atp_checked,
+                "utan_signal_checked": utan_signal_checked, "punktned_checked": punktned_checked, "punktned_text": punktned_text_input,
+                "nedstrackan_checked": nedsträcka_checked, "nedstracka_text": nedstracka_input, "arbete_text": arbete_input,
+                "plankorsning_checked": plankorsning_checked, "plankorsning_text": plankorsning_input, "vag_felaktig_checked": vag_felaktig_checked,
+                "vagvakt_checked": vagvakt_checked, "v_forsignal_checked": v_forsignal_checked, "v_signalfel_checked": v_signalfel_checked,
+                "felsignal_checked": felsignal_checked, "fel_infsi_checked": fel_infsi_checked, "fel_infsi_text": fel_infsi_input,
+                "fel_fsi_checked": fel_fsi_checked, "fel_fsi_text": fel_fsi_input, "fel_msi_checked": fel_msi_checked,
+                "fel_msi_text": fel_msi_input, "fel_ublsi_checked": fel_ublsi_checked, "fel_ublsi_text": fel_ublsi_input,
+                "tagskydd_checked": tagskydd_checked, "fel_utfsi_checked": fel_utfsi_checked, "fel_utfsi_text": fel_utfsi_input, 
+                "systemnod_checked": systemnod_checked, "balis_info_checked": balis_info_checked,
+                "atc_stopp_checked": atc_stopp_checked, "atc_vanta_stopp_checked": atc_vanta_stopp_checked,
+                "balis_overrfel_checked": balis_overrfel_checked, "tagskydd_checked": tagskydd_checked,
+                "plats5_text": plats5_input, "systemnod_text": plats5_input,
+                "tagorder_checked": tagorder_checked, "tagordertxt_text": tagordertxt_input,
+                "uppehall7_checked": uppehall7_checked,"uppehall_borta_checked": uppehall_borta_checked,
+                "uppehallet_trafikbyte_checked": uppehallet_trafikbyte_checked, "uppehall_checked": uppehall_checked,
+                "stopplats8_checked": stopplats8_checked, "stopplats_vid_text": stopplats_vid_input,
+                "korplan9_checked": korplan9_checked, "ovrigt10_checked": ovrigt10_checked, "ovrigt_text": ovrigt2_inputs,
+                "ordernummer22_text": ordernummer22_input, "klockslag22_text": klockslag22_input,
+                "fjbc22_text": fjbc22_input, "tkl22_text": tkl22_input, "forare22_text": forare22_input
+            }
+            pdf_bytes = skapa_blankett_22_framsida_dokument(form_data)
+            st.session_state.pdf_bytes_22 = pdf_bytes
+            st.session_state.form_data_22 = form_data
+            st.success("PDF-blanketten (framsida) har skapats!")
+            # Ladda ner knappen för den ifyllda PDF:en
+    if st.session_state.get("pdf_bytes_22") and st.session_state.get("form_data_22"):
+            st.download_button(
+            label="Ladda ner ifylld Blankett 22 (Framsida)",
+            data=st.session_state.pdf_bytes_22,
+            file_name=f"ifylld_Blankett_22_framsida_{st.session_state.form_data_22['tag_nr_text']}_{st.session_state.form_data_22['datum']}.pdf",
+            mime="application/pdf",
+            )       
+
 
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
@@ -1351,3 +1685,5 @@ if st.session_state["authentication_status"]:
         render_blankett_etcs_page()
     elif st.session_state.page == 'blankett_etcs_baksida':
         render_blankett_etcs_baksida_page()
+    elif st.session_state.page == 'blankett_22_framsida':
+        render_blankett_22_framsida_page()
