@@ -948,7 +948,7 @@ def render_svenska_page():
                         st.warning("Ingen giltig hastighet kunde beräknas.")
 
             
-    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,D, D+, E & EM. Dubbelkolla alltid mot officiella källor vid faktisk operativ användning. Uppdaterad: 250915")
+    st.info("Observera: Data är tolkad från Bromstabeller A,B,C,D, D+, E & EM. Dubbelkolla alltid mot officiella källor vid faktisk operativ användning. Uppdaterad: 250915. Tabell U och T kommer senare.")
     
 def render_norska_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
