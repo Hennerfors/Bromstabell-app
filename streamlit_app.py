@@ -1081,7 +1081,7 @@ def render_blanketter_menu_page():
     st.button("📝 Blankett 21: Passage av signal i stopp", on_click=go_to_blankett_21)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Framsida", on_click=go_to_blankett_etcs, disabled= False)
     st.button("📝 ETCS Samlingsblankett (E2/E3) - Baksida" , on_click=go_to_blankett_etcs_baksida, disabled= False)
-    st.button("📝 Blankett 22 - Framsidan" , on_click=go_to_blankett_22_framsida, disabled= False)
+    st.button("📝 Blankett 22 - Framsidan" , on_click=go_to_blankett_22_framsida, disabled= True)
 
 
 def render_blankett_21_page():
