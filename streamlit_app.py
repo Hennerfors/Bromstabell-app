@@ -974,7 +974,7 @@ def render_linjebocker_page():
         "Hallsberg - Frövi": "161_hallsbergs_rangerbangard_till_frovi_250601.pdf",
         "Frövi - Hallsberg": "141_frovi_till_hallsbergs_rangerbangard_250601.pdf",
         "Borlänge - Storvik": "315_borlange_central_till_fliskar_250601.pdf",
-        "Storvik - Borlänge": "283_fliskar_till_borlange_central_250601.pdf",
+        "Storvik - Borlänge": "283_fliskar_till_borlange_central_251026.pdf",
         "Ånge - Ljusdal": "095_ange_till_ljusdal_250601.pdf",
         "Ljusdal - Ånge": "117_ljusdal_till_ange_250601.pdf",
         "Ånge - Vännäs": "045_ange_till_vannas_250601.pdf",
