@@ -985,8 +985,8 @@ def render_linjebocker_page():
         "Gimonäs - Sundsvall E2": "267_gimonas_till_sundsvalls_central_250601.pdf",
         "Boden Central - Vännäs": "265_bodens_central_till_vannas_250505.pdf",
         "Vännäs - Boden Central": "301_vannas_till_bodens_central_250505.pdf",
-        "Luleå - Björnfjell": "071_lulea_till_bjornfjell_250601.pdf",
-        "Björnfjell - Luleå": "005_bjornfjell_till_lulea_250601.pdf",
+        "Luleå - Björnfjell": "071_lulea_till_bjornfjell_250913.pdf",
+        "Björnfjell - Luleå": "005_bjornfjell_till_lulea_250925.pdf",
     }
     
     vald_linjebok_namn = st.selectbox("Välj linjebeskrivning:", list(linjebocker.keys()))
