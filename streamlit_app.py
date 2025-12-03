@@ -983,8 +983,8 @@ def render_linjebocker_page():
         "Sundsvall - Ånge": "161_sundsvalls_central_till_ange_250601.pdf",
         "Sundsvall - Gimonäs E2": "321_sundsvalls_central_till_gimonas_250601.pdf",
         "Gimonäs - Sundsvall E2": "267_gimonas_till_sundsvalls_central_250601.pdf",
-        "Boden Central - Vännäs": "265_bodens_central_till_vannas_250505.pdf",
-        "Vännäs - Boden Central": "301_vannas_till_bodens_central_250505.pdf",
+        "Boden Central - Vännäs": "265_bodens_central_till_vannas_250913.pdf",
+        "Vännäs - Boden Central": "301_vannas_till_bodens_central_250913.pdf",
         "Luleå - Björnfjell": "071_lulea_till_bjornfjell_250913.pdf",
         "Björnfjell - Luleå": "005_bjornfjell_till_lulea_250925.pdf",
     }
