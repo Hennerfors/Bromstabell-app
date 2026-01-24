@@ -550,7 +550,9 @@ def skapa_ifyllt_dokument(data):
     pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn", "")))
 
     result = pdf.output(dest="S")
-    return bytes(result)
+    if isinstance(result, bytes):
+        return result
+    return result.encode("latin1")
 
 def skapa_etcs_dokument(data):
     """
@@ -680,7 +682,9 @@ def skapa_etcs_dokument(data):
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
-    return bytes(result)
+    if isinstance(result, bytes):
+        return result
+    return result.encode("latin1")
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -775,7 +779,9 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
-    return bytes(result)
+    if isinstance(result, bytes):
+        return result
+    return result.encode("latin1")
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
@@ -1276,7 +1282,9 @@ def skapa_blankett_22_framsida_dokument(data):
     pdf.text(x=117, y=281.5, txt=data.get("forare_namn", ""))
 
     result = pdf.output(dest="S")
-    return bytes(result)
+    if isinstance(result, bytes):
+        return result
+    return result.encode("latin1")
 
 def render_blankett_22_framsida_page():
     """Renderar formuläret för att fylla i Blankett 22 Framsida."""
