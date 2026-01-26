@@ -11,6 +11,38 @@ from datetime import datetime
 
 
 # ==============================================================================
+# AUTHENTICATION
+# ==============================================================================
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
+
+# Perform login
+try:
+    authenticator.login()
+except Exception as e:
+    st.error(f"Login error: {str(e)}")
+    st.stop()
+
+# Check authentication status
+if st.session_state.get("authentication_status") is False:
+    st.error('Username/password is incorrect')
+    st.stop()
+elif st.session_state.get("authentication_status") is None:
+    st.warning('Please enter your username and password')
+    st.stop()
+
+# User is authenticated, continue with the app
+st.write(f'Welcome *{st.session_state.get("name", "User")}*')
+authenticator.logout()
+
+# ==============================================================================
 # DATADEFINITIONER (Oförändrade)
 # ==============================================================================
 HASTIGHETS_DATA = {
@@ -550,9 +582,14 @@ def skapa_ifyllt_dokument(data):
     pdf.text(x=117, y=281.5, txt=str(data.get("forare_namn", "")))
 
     result = pdf.output(dest="S")
+    # Handle both old FPDF (returns string) and new FPDF2 (returns bytes)
     if isinstance(result, bytes):
         return result
-    return result.encode("latin1")
+    elif isinstance(result, str):
+        return result.encode("latin1")
+    else:
+        # Fallback: try to convert to bytes
+        return bytes(result)
 
 def skapa_etcs_dokument(data):
     """
@@ -682,9 +719,13 @@ def skapa_etcs_dokument(data):
     pdf.text(x=132.42, y=266.5, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
+    # Handle both old FPDF (returns string) and new FPDF2 (returns bytes)
     if isinstance(result, bytes):
         return result
-    return result.encode("latin1")
+    elif isinstance(result, str):
+        return result.encode("latin1")
+    else:
+        return bytes(result)
 
 
 def skapa_etcs_baksida_dokument(data):
@@ -779,9 +820,13 @@ def skapa_etcs_baksida_dokument(data):
     pdf.text(x=120.85, y=264.07, txt=str(data.get("ordernummer")))
 
     result = pdf.output(dest="S")
+    # Handle both old FPDF (returns string) and new FPDF2 (returns bytes)
     if isinstance(result, bytes):
         return result
-    return result.encode("latin1")
+    elif isinstance(result, str):
+        return result.encode("latin1")
+    else:
+        return bytes(result)
 
 # ==============================================================================
 # STREAMLIT-APPLIKATIONENS UTSEENDE (UI)
@@ -1282,9 +1327,13 @@ def skapa_blankett_22_framsida_dokument(data):
     pdf.text(x=117, y=281.5, txt=data.get("forare_namn", ""))
 
     result = pdf.output(dest="S")
+    # Handle both old FPDF (returns string) and new FPDF2 (returns bytes)
     if isinstance(result, bytes):
         return result
-    return result.encode("latin1")
+    elif isinstance(result, str):
+        return result.encode("latin1")
+    else:
+        return bytes(result)
 
 def render_blankett_22_framsida_page():
     """Renderar formuläret för att fylla i Blankett 22 Framsida."""
