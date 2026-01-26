@@ -1,0 +1,12 @@
+credentials:
+  usernames:
+    SHonrail:
+      email: admin@example.com
+      name: SHonrail
+      password: $2b$12$l4/82T1JUBkytuV7g4BuB.hvF7kG3vR7vcjOx8miO2QLsNLqkkCQ2
+cookie:
+  expiry_days: 30
+  key: your_secret_key_change_this
+  name: streamlit_authentication_cookie
+pre-authorized:
+  emails: []
