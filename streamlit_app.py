@@ -8,6 +8,8 @@ import re
 from io import BytesIO
 from fpdf import FPDF
 from datetime import datetime
+import json
+import math
 
 
 # ==============================================================================
@@ -40,7 +42,12 @@ elif st.session_state.get("authentication_status") is None:
 
 # User is authenticated, continue with the app
 st.write(f'Welcome *{st.session_state.get("name", "User")}*')
-authenticator.logout()
+
+# Add logout button in sidebar
+with st.sidebar:
+    if st.button('Logout'):
+        st.session_state.authentication_status = False
+        st.rerun()
 
 # ==============================================================================
 # DATADEFINITIONER (Oförändrade)
@@ -246,6 +253,80 @@ NORSKA_TABELLER = {
 # ==============================================================================
 # LOGIK OCH FUNKTIONER
 # ==============================================================================
+
+@st.cache_data
+def load_stations():
+    """Laddar stations.json om den finns."""
+    try:
+        with open("stations.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+STATION_DB = load_stations()
+
+def get_distance_meters(lat1, lon1, lat2, lon2):
+    """Räknar ut avstånd i meter mellan två GPS-punkter."""
+    if lat1 == 0 or lat2 == 0: return 999999
+    R = 6371000
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
+
+def parse_kororder_new(file_obj):
+    """Tolkar Körorder-PDF och matchar mot stationsdatabasen."""
+    parsed_data = {"stops": [], "train_id": "Okänt"}
+    current_station = None
+    
+    with pdfplumber.open(file_obj) as pdf:
+        # Försök hitta Tåg-ID på första sidan
+        try:
+            page1_text = pdf.pages[0].extract_text()
+            id_match = re.search(r"Train-ID:\s*([\d\s]+)", page1_text)
+            if id_match: parsed_data["train_id"] = id_match.group(1)
+        except:
+            pass
+
+        for page in pdf.pages:
+            table = page.extract_table()
+            if not table: continue
+            
+            for row in table:
+                # Struktur: [Plats, Ank, Avg, Övrigt, Säkerhet]
+                # Kontrollera att raden har tillräckligt många kolumner
+                if len(row) < 5: continue
+                
+                col_station = row[0]
+                col_avg = row[2]
+                col_safety = row[4]
+                
+                station_name = col_station.replace('\n', ' ').strip() if col_station else ""
+                safety_text = col_safety.replace('\n', ' ').strip() if col_safety else ""
+                
+                # Ny station hittad
+                if station_name and len(station_name) > 1:
+                    coords = STATION_DB.get(station_name, {"lat": 0, "lon": 0})
+                    
+                    if current_station: parsed_data["stops"].append(current_station)
+                    
+                    current_station = {
+                        "name": station_name,
+                        "time": col_avg.replace('\n', '') if col_avg else "",
+                        "lat": coords["lat"], "lon": coords["lon"],
+                        "warnings": []
+                    }
+                    if safety_text: current_station["warnings"].append(safety_text)
+                
+                # Fortsättning på säkerhetsorder (raden under)
+                elif not station_name and safety_text and current_station:
+                    current_station["warnings"].append(safety_text)
+                    
+        if current_station: parsed_data["stops"].append(current_station)
+            
+    return parsed_data
 
 # ... (hitta_max_hastighet och andra funktioner är oförändrade) ...
 def hitta_max_hastighet(bana, tåglängd, bromsprocent):
@@ -844,13 +925,14 @@ def go_to_blankett_21(): st.session_state.page = 'blankett_21'
 def go_to_blankett_22(): st.session_state.page = 'blankett_22'
 def go_to_blankett_etcs(): st.session_state.page = 'blankett_etcs'
 def go_to_blankett_etcs_baksida(): st.session_state.page = 'blankett_etcs_baksida'
+def go_to_kororder(): st.session_state.page = 'kororder'
 
 
 def render_main_page():
     st.markdown("<h1 style='text-align: center;'>🚂 Tågdata</h1>", unsafe_allow_html=True)
     st.markdown('<h3 style="text-align: center;">Välj verktyg</h3>', unsafe_allow_html=True)
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         st.button("Bromsprocent Sverige", on_click=go_to_svenska, use_container_width=True)
     with col2:
@@ -859,6 +941,8 @@ def render_main_page():
         st.button("Linjebeskrivningar", on_click=go_to_linjebocker, use_container_width=True)
     with col4:
         st.button("Blanketter Sverige", on_click=go_to_blanketter_menu, use_container_width=True)
+    with col5:
+        st.button("Körorder Sverige", on_click=go_to_kororder, use_container_width=True)    
         
     st.markdown("<h6 style='text-align: center; position: fixed; bottom: 10px; width: 100%;'>Utvecklad av SH. Vid fel eller förslag, maila <a href='mailto:sh@onrail.no'>sh@onrail.no</a></h6>",
     unsafe_allow_html=True)
@@ -1605,6 +1689,69 @@ def render_blankett_etcs_baksida_page():
             mime="application/pdf",
         )
 
+def render_kororder_page():
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
+    st.info("Ladda upp din körorder (PDF) för att se stationer och säkerhetsorder. Använd reglaget för att simulera GPS-position.")
+
+    if not STATION_DB:
+        st.warning("Varning: Kunde inte ladda 'stations.json'. GPS-koppling kommer inte fungera. Se till att filen ligger i mappen.")
+
+    uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
+    
+    if uploaded_file:
+        try:
+            data = parse_kororder_new(uploaded_file)
+            
+            # --- Simulator Logic ---
+            valid_lats = [s['lat'] for s in data['stops'] if s['lat'] != 0]
+            if valid_lats:
+                max_l = max(valid_lats) + 0.05
+                min_l = min(valid_lats) - 0.05
+            else:
+                max_l, min_l = 69.0, 55.0
+            
+            st.write("---")
+            st.subheader("🕹️ GPS Simulator")
+            sim_lat = st.slider("Dra tåget (Latitud)", min_l, max_l, max_l, 0.001, key="gps_slider")
+            
+            st.write("---")
+            st.subheader(f"Tåg: {data['train_id']}")
+            
+            for stop in data['stops']:
+                # Räkna avstånd
+                dist = 999999
+                if stop['lat'] != 0:
+                    dist = get_distance_meters(sim_lat, stop['lon'], stop['lat'], stop['lon'])
+                
+                # UI Status
+                icon = "⚪"
+                card_style = "padding:10px; border-radius:5px; border:1px solid #ddd; margin-bottom:10px;"
+                
+                # Logik (Antar resa Norr -> Söder för testet)
+                if stop['lat'] != 0 and sim_lat < stop['lat']:
+                    icon = "✅" # Passerad
+                    card_style += "background-color:rgba(0, 255, 0, 0.1);"
+                elif dist < 3000:
+                    icon = "🚨" # Närmar sig
+                    card_style += "background-color:rgba(255, 0, 0, 0.1);"
+                    st.warning(f"Du närmar dig {stop['name']} ({int(dist)} m)")
+
+                # Visa kort
+                st.markdown(f"""
+                <div style="{card_style}">
+                    <h3>{icon} {stop['name']}</h3>
+                    <p><b>Tid:</b> {stop['time']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if stop['warnings']:
+                    for w in stop['warnings']:
+                        st.error(f"⚠️ {w}")
+                        
+        except Exception as e:
+            st.error(f"Kunde inte läsa körordern: {e}")
+
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
 # ==============================================================================
@@ -1630,3 +1777,5 @@ if st.session_state["authentication_status"]:
         render_blankett_etcs_page()
     elif st.session_state.page == 'blankett_etcs_baksida':
         render_blankett_etcs_baksida_page()
+    elif st.session_state.page == 'kororder':
+        render_kororder_page()    
