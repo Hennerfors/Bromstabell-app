@@ -11,7 +11,7 @@ from datetime import datetime
 import json
 import math
 from streamlit_js_eval import get_geolocation
-
+from streamlit_autorefresh import st_autorefresh
 
 # ==============================================================================
 # AUTHENTICATION
@@ -1704,16 +1704,36 @@ def render_kororder_page():
         try:
             data = parse_kororder_new(uploaded_file)
             
-# --- 1. FÖRSÖK HÄMTA GPS ---
-            st.write("---")
+            # --- 1. INSTÄLLNINGAR FÖR BATTERI ---
+            st.sidebar.write("---")
+            st.sidebar.subheader("🔋 Batteri & GPS")
             
-            # Detta anropar webbläsaren för position
+            # Checkbox för att spara batteri
+            # Default är True (Batterispar på)
+            eko_mode = st.sidebar.checkbox("Batterisparläge (10s)", value=True)
+            
+            if eko_mode:
+                # Uppdatera var 10:e sekund (10000 ms) - Bra för batteriet
+                uppdaterings_intervall = 10000 
+                st.sidebar.caption("Uppdaterar position var 10:e sek.")
+            else:
+                # Uppdatera var 2:a sekund (2000 ms) - Bättre precision inför stopp
+                uppdaterings_intervall = 2000
+                st.sidebar.caption("Uppdaterar position var 2:a sek.")
+
+            # Denna rad tvingar appen att köra om sig själv med intervallet vi valde
+            st_autorefresh(interval=uppdaterings_intervall, key="gps_refresher")
+
+            # --- 2. HÄMTA GPS ---
+            # Nu hämtas positionen bara när autorefresh triggar omladdning
             gps_data = get_geolocation(component_key='my_gps')
             
             sim_lat = 0
             sim_lon = 0
 
-            # --- 2. KOLLA OM VI FICK SVAR ---
+            # --- 3. LOGIK (GPS vs SIMULATOR) ---
+            st.write("---")
+            
             if gps_data and 'coords' in gps_data:
                 # JA! Vi har riktig GPS
                 st.subheader("📍 GPS: Aktiv")
@@ -1725,7 +1745,7 @@ def render_kororder_page():
                 st.caption(f"Lat: {sim_lat}, Lon: {sim_lon}")
                 
             else:
-                # NEJ, ingen GPS. Visa simulatorn istället (Din gamla kod)
+                # NEJ, ingen GPS. Visa simulatorn istället
                 st.subheader("🕹️ GPS Simulator")
                 st.warning("Hittade ingen GPS-signal (visar simulator).")
                 
