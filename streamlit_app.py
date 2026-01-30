@@ -10,6 +10,7 @@ from fpdf import FPDF
 from datetime import datetime
 import json
 import math
+from streamlit_js_eval import get_geolocation
 
 
 # ==============================================================================
@@ -1703,18 +1704,43 @@ def render_kororder_page():
         try:
             data = parse_kororder_new(uploaded_file)
             
-            # --- Simulator Logic ---
-            valid_lats = [s['lat'] for s in data['stops'] if s['lat'] != 0]
-            if valid_lats:
-                max_l = max(valid_lats) + 0.05
-                min_l = min(valid_lats) - 0.05
-            else:
-                max_l, min_l = 69.0, 55.0
-            
+# --- 1. FÖRSÖK HÄMTA GPS ---
             st.write("---")
-            st.subheader("🕹️ GPS Simulator")
-            sim_lat = st.slider("Dra tåget (Latitud)", min_l, max_l, max_l, 0.001, key="gps_slider")
             
+            # Detta anropar webbläsaren för position
+            gps_data = get_geolocation(component_key='my_gps')
+            
+            sim_lat = 0
+            sim_lon = 0
+
+            # --- 2. KOLLA OM VI FICK SVAR ---
+            if gps_data and 'coords' in gps_data:
+                # JA! Vi har riktig GPS
+                st.subheader("📍 GPS: Aktiv")
+                sim_lat = gps_data['coords']['latitude']
+                sim_lon = gps_data['coords']['longitude']
+                accuracy = gps_data['coords']['accuracy']
+                
+                st.success(f"Använder enhetens position. (Noggrannhet: {int(accuracy)} m)")
+                st.caption(f"Lat: {sim_lat}, Lon: {sim_lon}")
+                
+            else:
+                # NEJ, ingen GPS. Visa simulatorn istället (Din gamla kod)
+                st.subheader("🕹️ GPS Simulator")
+                st.warning("Hittade ingen GPS-signal (visar simulator).")
+                
+                # Räkna ut gränser för slidern
+                valid_lats = [s['lat'] for s in data['stops'] if s['lat'] != 0]
+                if valid_lats:
+                    max_l = max(valid_lats) + 0.05
+                    min_l = min(valid_lats) - 0.05
+                else:
+                    max_l, min_l = 69.0, 55.0
+                
+                # Slidern styr "Tågets position" manuellt
+                sim_lat = st.slider("Dra tåget (Latitud)", min_l, max_l, max_l, 0.001, key="gps_slider")
+                sim_lon = 15.0 # Vi gissar en longitud för simulatorn
+
             st.write("---")
             st.subheader(f"Tåg: {data['train_id']}")
             
