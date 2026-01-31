@@ -2186,10 +2186,74 @@ def render_kororder_page():
                 first_stop = valid_stops[0]
                 last_stop = valid_stops[-1]
                 
+def render_kororder_page():
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
+    
+    # --- 0. INITIALISERA MINNE ---
+    if 'station_log' not in st.session_state:
+        st.session_state.station_log = {} 
+    if 'last_passed_update' not in st.session_state:
+        st.session_state.last_passed_update = None 
+    if 'list_reversed_auto' not in st.session_state:
+        st.session_state.list_reversed_auto = False
+
+    # --- 1. SETUP ---
+    if not STATION_DB:
+        st.warning("⚠️ Varning: 'stations.json' saknas. GPS-matchning fungerar ej.")
+
+    uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
+    
+    if uploaded_file:
+        try:
+            # Läs in data
+            data = parse_kororder_new(uploaded_file)
+            stops = data['stops']
+            
+            # --- 2. INSTÄLLNINGAR ---
+            with st.sidebar:
+                st.write("---")
+                st.subheader("Inställningar")
+                
+                manual_reverse = st.checkbox("Tvinga omvänd ordning", 
+                                           value=False, 
+                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.")
+                
+                eko_mode = st.checkbox("Batterisparläge (10s)", value=False)
+                
+                if st.button("Nollställ mätningar"):
+                    st.session_state.station_log = {}
+                    st.session_state.last_passed_update = None
+                    st.session_state.list_reversed_auto = False
+                    st.rerun()
+
+            # --- 3. HÄMTA GPS ---
+            interval = 10000 if eko_mode else 2000
+            st_autorefresh(interval=interval, key="gps_refresher")
+            
+            # OBS: enable_high_accuracy är BORTTAGET för att undvika krasch
+            gps_data = get_geolocation(component_key='my_gps')
+            
+            my_lat, my_lon = 0, 0
+            has_gps = False
+            
+            if gps_data and 'coords' in gps_data:
+                has_gps = True
+                my_lat = gps_data['coords']['latitude']
+                my_lon = gps_data['coords']['longitude']
+
+            # --- 4. RIKTNING & VÄNDNING ---
+            valid_stops = [s for s in stops if s['lat'] != 0]
+            should_reverse = False
+            auto_msg = ""
+
+            if has_gps and len(valid_stops) >= 2 and not manual_reverse:
+                first_stop = valid_stops[0]
+                last_stop = valid_stops[-1]
+                
                 dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
                 dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
                 
-                # Om vi är närmare SLUTET än STARTEN (med 5km marginal) -> Vänd listan!
                 if dist_to_end < dist_to_start - 5000:
                     should_reverse = True
                     auto_msg = f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt."
@@ -2228,11 +2292,66 @@ def render_kororder_page():
             for i, stop in enumerate(stops):
                 dist = 999999
                 if stop['lat'] != 0:
-                    dist = get_
+                    dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
+                
+                if dist < nearest_dist:
+                    nearest_dist = dist
 
+                passed = False
+                if stop['lat'] != 0:
+                    if direction_south:
+                        if my_lat < stop['lat']: passed = True
+                    else:
+                        if my_lat > stop['lat']: passed = True
+                
+                # Hastighetslogik
+                if passed and stop['name'] not in st.session_state.station_log:
+                    now = datetime.now()
+                    speed = None
+                    last = st.session_state.last_passed_update
+                    
+                    if last:
+                        d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
+                        h = (now - last['time']).total_seconds() / 3600.0
+                        if h > 0.001 and d_m > 100:
+                            speed = int((d_m/1000.0) / h)
+                    
+                    st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
+                    st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
+                    st.rerun()
 
+                # UI Variabler
+                bg = ""
+                icon = "⚪"
+                border = "#ddd"
+                info_text = ""
+                
+                log = st.session_state.station_log.get(stop['name'])
+                
+                if passed:
+                    icon = "✅"
+                    bg = "rgba(0, 255, 0, 0.05)"
+                    if log and log['speed']: info_text = "Snitt: <b>" + str(log['speed']) + " km/h</b>"
+                elif dist < 2500:
+                    icon = "📍" 
+                    bg = "rgba(255, 255, 0, 0.2)"
+                    border = "#ffcc00"
+                    st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
+                # BOMSÄKER HTML-KONSTRUKTION (Inga f-strings, vanlig sträng-plussning)
+                card_html = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
+                card_html += '<div style="display:flex; justify-content:space-between; align-items:center;">'
+                card_html += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
+                card_html += '<div style="text-align:right;">' + stop['time'] + '</div>'
+                card_html += '</div></div>'
 
+                st.markdown(card_html, unsafe_allow_html=True)
+                
+                if stop['warnings']:
+                    for w in stop['warnings']: st.error(f"⚠️ {w}")
+
+        except Exception as e:
+            st.error(f"Fel: {e}")
 
 
 # ==============================================================================
