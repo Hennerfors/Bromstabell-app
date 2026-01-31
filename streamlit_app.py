@@ -1690,7 +1690,7 @@ def render_blankett_etcs_baksida_page():
             mime="application/pdf",
         )
 
- def render_kororder_page():
+def render_kororder_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
     
@@ -1735,7 +1735,7 @@ def render_blankett_etcs_baksida_page():
             interval = 10000 if eko_mode else 2000
             st_autorefresh(interval=interval, key="gps_refresher")
             
-            # GPS utan extra parametrar för att undvika krasch
+            # GPS utan extra parametrar
             gps_data = get_geolocation(component_key='my_gps')
             
             my_lat, my_lon = 0, 0
@@ -1785,6 +1785,7 @@ def render_blankett_etcs_baksida_page():
                 col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
             else:
                 st.warning("📡 Söker GPS...")
+                # Simulator fallback om man vill testa utan GPS
                 if valid_lats:
                     max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
                     my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l)
@@ -1842,22 +1843,20 @@ def render_blankett_etcs_baksida_page():
                     border = "#ffcc00"
                     st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                # BOMSÄKER HTML - Inga f-strings, inga triple quotes
-                html_block = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
-                html_block += '<div style="display:flex; justify-content:space-between; align-items:center;">'
-                html_block += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
-                html_block += '<div style="text-align:right;">' + stop['time'] + '</div>'
-                html_block += '</div></div>'
+                # Vanlig sträng-konkatenering (SÄKRAST)
+                card_html = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
+                card_html += '<div style="display:flex; justify-content:space-between; align-items:center;">'
+                card_html += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
+                card_html += '<div style="text-align:right;">' + stop['time'] + '</div>'
+                card_html += '</div></div>'
 
-                st.markdown(html_block, unsafe_allow_html=True)
+                st.markdown(card_html, unsafe_allow_html=True)
                 
                 if stop['warnings']:
                     for w in stop['warnings']: st.error(f"⚠️ {w}")
 
         except Exception as e:
             st.error(f"Fel: {e}")
-               
-              
 
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
