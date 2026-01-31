@@ -2020,55 +2020,6 @@ def render_kororder_page():
             valid_stops = [s for s in stops if s['lat'] != 0]
             should_reverse = False
             auto_msg = ""
-
-            if has_gps and len(valid_stops) >= 2 and not manual_reverse:
-                first_stop = valid_stops[0]
-                last_stop = valid_stops[-1]
-                
-                dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
-                dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
-                
-                if dist_to_end < dist_to_start - 5000:
-                    should_reverse = True
-                    auto_msg = f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt."
-
-            if manual_reverse or should_reverse:
-                stops = stops[::-1]
-                data['stops'] = stops
-            
-            if auto_msg:
-                st.info(auto_msg)
-
-            # --- 5. ANALYS AV RIKTNING ---
-            valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
-            direction_south = True 
-            if len(valid_lats) >= 2:
-                if valid_lats[0] < valid_lats[-1]:
-                    direction_south = False
-            
-            st.subheader(f"Tåg: {data['train_id']}")
-            
-            if has_gps:
-                acc = gps_data['coords']['accuracy']
-                col1, col2 = st.columns(2)
-                col1.success(f"GPS Aktiv (±{int(acc)}m)")
-                col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
-            else:
-                st.warning("📡 Söker GPS...")
-                if valid_lats:
-                    max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
-                    my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l)
-                    my_lon = 15.0
-
-            # --- 6. VISA LISTAN ---
-            nearest_dist = 999999
-
-            for i, stop in enumerate(stops):
-                dist = 999999
-                if stop['lat'] != 0:
-                    dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
-                
-                if dist < nearest_dist:
 def render_kororder_page():
     st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
     st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
@@ -2110,11 +2061,11 @@ def render_kororder_page():
                     st.session_state.list_reversed_auto = False
                     st.rerun()
 
-            # --- 3. HÄMTA GPS ---
+            # --- 3. HÄMTA GPS (FIXAD) ---
             interval = 10000 if eko_mode else 2000
             st_autorefresh(interval=interval, key="gps_refresher")
             
-            # HÄR VAR FELET: Vi tar bort 'enable_high_accuracy' som orsakade kraschen
+            # FIX: Tog bort 'enable_high_accuracy' som orsakade kraschen
             gps_data = get_geolocation(component_key='my_gps')
             
             my_lat, my_lon = 0, 0
@@ -2221,18 +2172,14 @@ def render_kororder_page():
                     border = "#ffcc00"
                     st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                # HÄR ÄR ÄNDRINGEN: Säkrare HTML-konstruktion
-                html_code = f"""
-                <div style="padding: 10px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 8px; background-color: {bg};">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <h3 style="margin:0; padding:0;">{icon} {stop['name']}</h3>
-                            <small>{info_text}</small>
-                        </div>
-                        <div style="text-align:right;">{stop['time']}</div>
-                    </div>
-                </div>
-                """
+                # FIX: Säkrare HTML-konstruktion som inte kraschar vid copy-paste
+                html_code = (
+                    f'<div style="padding: 10px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 8px; background-color: {bg};">'
+                    f'<div style="display:flex; justify-content:space-between; align-items:center;">'
+                    f'<div><h3 style="margin:0; padding:0;">{icon} {stop["name"]}</h3><small>{info_text}</small></div>'
+                    f'<div style="text-align:right;">{stop["time"]}</div>'
+                    f'</div></div>'
+                )
                 st.markdown(html_code, unsafe_allow_html=True)
                 
                 if stop['warnings']:
