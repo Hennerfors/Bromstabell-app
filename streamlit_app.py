@@ -1960,6 +1960,67 @@ def render_kororder_page():
             should_reverse = False
             auto_msg = ""
 
+def render_kororder_page():
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
+    
+    # --- 0. INITIALISERA MINNE ---
+    if 'station_log' not in st.session_state:
+        st.session_state.station_log = {} 
+    if 'last_passed_update' not in st.session_state:
+        st.session_state.last_passed_update = None 
+    if 'list_reversed_auto' not in st.session_state:
+        st.session_state.list_reversed_auto = False
+
+    # --- 1. SETUP ---
+    if not STATION_DB:
+        st.warning("⚠️ Varning: 'stations.json' saknas. GPS-matchning fungerar ej.")
+
+    uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
+    
+    if uploaded_file:
+        try:
+            # Läs in data
+            data = parse_kororder_new(uploaded_file)
+            stops = data['stops']
+            
+            # --- 2. INSTÄLLNINGAR ---
+            with st.sidebar:
+                st.write("---")
+                st.subheader("Inställningar")
+                
+                manual_reverse = st.checkbox("Tvinga omvänd ordning", 
+                                           value=False, 
+                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.")
+                
+                eko_mode = st.checkbox("Batterisparläge (10s)", value=False)
+                
+                if st.button("Nollställ mätningar"):
+                    st.session_state.station_log = {}
+                    st.session_state.last_passed_update = None
+                    st.session_state.list_reversed_auto = False
+                    st.rerun()
+
+            # --- 3. HÄMTA GPS ---
+            interval = 10000 if eko_mode else 2000
+            st_autorefresh(interval=interval, key="gps_refresher")
+            
+            # HÄR ÄR ÄNDRINGEN: Tog bort 'enable_high_accuracy' som orsakade kraschen
+            gps_data = get_geolocation(component_key='my_gps')
+            
+            my_lat, my_lon = 0, 0
+            has_gps = False
+            
+            if gps_data and 'coords' in gps_data:
+                has_gps = True
+                my_lat = gps_data['coords']['latitude']
+                my_lon = gps_data['coords']['longitude']
+
+            # --- 4. RIKTNING & VÄNDNING ---
+            valid_stops = [s for s in stops if s['lat'] != 0]
+            should_reverse = False
+            auto_msg = ""
+
             if has_gps and len(valid_stops) >= 2 and not manual_reverse:
                 first_stop = valid_stops[0]
                 last_stop = valid_stops[-1]
@@ -1978,14 +2039,13 @@ def render_kororder_page():
             if auto_msg:
                 st.info(auto_msg)
 
-            # --- 5. RIKTNINGSANALYS ---
+            # --- 5. ANALYS AV RIKTNING ---
             valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
             direction_south = True 
             if len(valid_lats) >= 2:
                 if valid_lats[0] < valid_lats[-1]:
                     direction_south = False
             
-            # Visa status
             st.subheader(f"Tåg: {data['train_id']}")
             
             if has_gps:
@@ -2018,7 +2078,7 @@ def render_kororder_page():
                     else:
                         if my_lat > stop['lat']: passed = True
                 
-                # --- Medelhastighet ---
+                # Hastighetslogik
                 if passed and stop['name'] not in st.session_state.station_log:
                     now = datetime.now()
                     speed = None
@@ -2034,7 +2094,7 @@ def render_kororder_page():
                     st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
                     st.rerun()
 
-                # UI
+                # UI Variabler
                 bg = ""
                 icon = "⚪"
                 border = "#ddd"
@@ -2045,27 +2105,33 @@ def render_kororder_page():
                 if passed:
                     icon = "✅"
                     bg = "rgba(0, 255, 0, 0.05)"
-                    if log and log['speed']: info_text = f"Snitt: **{log['speed']} km/h**"
+                    if log and log['speed']: info_text = f"Snitt: <b>{log['speed']} km/h</b>"
                 elif dist < 2500:
                     icon = "📍" 
                     bg = "rgba(255, 255, 0, 0.2)"
                     border = "#ffcc00"
                     st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                st.markdown(f"""
+                # HÄR ÄR ÄNDRINGEN: Säkrare HTML-konstruktion
+                html_code = f"""
                 <div style="padding: 10px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 8px; background-color: {bg};">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><h3 style="margin:0; padding:0;">{icon} {stop['name']}</h3><small>{info_text}</small></div>
+                        <div>
+                            <h3 style="margin:0; padding:0;">{icon} {stop['name']}</h3>
+                            <small>{info_text}</small>
+                        </div>
                         <div style="text-align:right;">{stop['time']}</div>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+                """
+                st.markdown(html_code, unsafe_allow_html=True)
                 
                 if stop['warnings']:
                     for w in stop['warnings']: st.error(f"⚠️ {w}")
 
         except Exception as e:
-            st.error(f"Ett fel uppstod: {e}")
+            st.error(f"Fel: {e}")
+
 
 
 
