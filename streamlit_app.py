@@ -1790,143 +1790,27 @@ def render_kororder_page():
                     max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
                     my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l)
                     my_lon = 15.0
-def render_kororder_page():
-    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
-    st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
-    
-    # --- 0. INITIALISERA MINNE ---
-    if 'station_log' not in st.session_state:
-        st.session_state.station_log = {} 
-    if 'last_passed_update' not in st.session_state:
-        st.session_state.last_passed_update = None 
 
-    # --- 1. SETUP ---
-    if not STATION_DB:
-        st.warning("⚠️ Varning: 'stations.json' saknas. GPS-matchning fungerar ej.")
+            # --- 6. VISA LISTAN ---
+            nearest_dist = 999999
 
-    uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
-    
-    if uploaded_file:
-        try:
-            # Läs in data
-            data = parse_kororder_new(uploaded_file)
-            stops = data['stops']
-            
-            # --- 2. INSTÄLLNINGAR ---
-            with st.sidebar:
-                st.write("---")
-                st.subheader("Inställningar")
-                
-                manual_reverse = st.checkbox("Tvinga omvänd ordning", 
-                                           value=False, 
-                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.")
-                
-                eko_mode = st.checkbox("Batterisparläge (10s)", value=False)
-                
-                if st.button("Nollställ mätningar"):
-                    st.session_state.station_log = {}
-                    st.session_state.last_passed_update = None
-                    st.rerun()
-
-            # --- 3. HÄMTA GPS ---
-            interval = 10000 if eko_mode else 2000
-            st_autorefresh(interval=interval, key="gps_refresher")
-            
-            gps_data = get_geolocation(component_key='my_gps')
-            
-            my_lat, my_lon = 0, 0
-            has_gps = False
-            
-            if gps_data and 'coords' in gps_data:
-                has_gps = True
-                my_lat = gps_data['coords']['latitude']
-                my_lon = gps_data['coords']['longitude']
-
-            # --- 4. AUTO-VÄNDNING (Smartare logik) ---
-            valid_stops = [s for s in stops if s['lat'] != 0]
-            should_reverse = False
-            auto_msg = ""
-
-            if has_gps and len(valid_stops) >= 2 and not manual_reverse:
-                first_stop = valid_stops[0]
-                last_stop = valid_stops[-1]
-                
-                dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
-                dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
-                
-                # Om vi är betydligt närmare slutet än starten -> Vänd
-                if dist_to_end < dist_to_start - 5000:
-                    should_reverse = True
-                    auto_msg = f"📍 Startar nära {last_stop['name']}. Vände listan."
-
-            if manual_reverse or should_reverse:
-                stops = stops[::-1]
-                data['stops'] = stops
-            
-            if auto_msg:
-                st.info(auto_msg)
-
-            # --- 5. RIKTNING & "DOMINO-EFFEKT" ---
-            valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
-            direction_south = True 
-            if len(valid_lats) >= 2:
-                if valid_lats[0] < valid_lats[-1]:
-                    direction_south = False
-            
-            # Hitta vilken index vi har kommit till (Sista passerade stationen)
-            last_passed_index = -1
-            
-            # Loopa igenom för att se hur långt vi kommit
-            for i, stop in enumerate(stops):
-                if stop['lat'] != 0:
-                    is_passed_check = False
-                    if direction_south:
-                        if my_lat < stop['lat']: is_passed_check = True
-                    else:
-                        if my_lat > stop['lat']: is_passed_check = True
-                    
-                    if is_passed_check:
-                        last_passed_index = i # Uppdatera till senaste vi passerat
-
-            # --- 6. VISA STATUS ---
-            st.subheader(f"Tåg: {data['train_id']}")
-            
-            if has_gps:
-                acc = int(gps_data['coords']['accuracy'])
-                col1, col2 = st.columns(2)
-                col1.success(f"GPS Aktiv (±{acc}m)")
-                col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
-            else:
-                st.warning("📡 Söker GPS...")
-                # Simulator (om man vill testa)
-                if valid_lats:
-                    max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
-                    my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l)
-                    my_lon = 15.0
-
-            # --- 7. RENDERA LISTAN ---
             for i, stop in enumerate(stops):
                 dist = 999999
                 if stop['lat'] != 0:
                     dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
-
-                # Logik: Är denna station passerad?
-                # JA, om den fysiskt är passerad ELLER om en senare station är passerad (Domino)
-                passed = False
-                if i <= last_passed_index:
-                    passed = True
                 
-                # --- Medelhastighet ---
-                # Logga bara om vi PRECIS passerade denna specifika (inte via domino)
-                # Detta för att undvika konstig mätning om GPS hoppar
-                just_passed_now = False
+                if dist < nearest_dist:
+                    nearest_dist = dist
+
+                passed = False
                 if stop['lat'] != 0:
                     if direction_south:
-                        if my_lat < stop['lat']: just_passed_now = True
+                        if my_lat < stop['lat']: passed = True
                     else:
-                        if my_lat > stop['lat']: just_passed_now = True
+                        if my_lat > stop['lat']: passed = True
                 
-                if just_passed_now and stop['name'] not in st.session_state.station_log:
+                # Hastighetslogik
+                if passed and stop['name'] not in st.session_state.station_log:
                     now = datetime.now()
                     speed = None
                     last = st.session_state.last_passed_update
@@ -1959,7 +1843,7 @@ def render_kororder_page():
                     border = "#ffcc00"
                     st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                # BOMSÄKER HTML
+                # Vanlig sträng-konkatenering (SÄKRAST)
                 card_html = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
                 card_html += '<div style="display:flex; justify-content:space-between; align-items:center;">'
                 card_html += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
@@ -1973,7 +1857,6 @@ def render_kororder_page():
 
         except Exception as e:
             st.error(f"Fel: {e}")
-
 
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
