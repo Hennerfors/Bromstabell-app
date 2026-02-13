@@ -1691,7 +1691,9 @@ def render_blankett_etcs_baksida_page():
         )
 
 def render_kororder_page():
-    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main)
+    # Unik key på knappen för att undvika DuplicateElementId
+    st.button("⬅️ Tillbaka till huvudmenyn", on_click=go_to_main, key="back_btn_ko")
+    
     st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
     
     # --- 0. INITIALISERA MINNE ---
@@ -1721,21 +1723,23 @@ def render_kororder_page():
                 
                 manual_reverse = st.checkbox("Tvinga omvänd ordning", 
                                            value=False, 
-                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.")
+                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.",
+                                           key="manual_rev_check")
                 
-                eko_mode = st.checkbox("Batterisparläge (10s)", value=False)
+                # ÄNDRAT HÄR: Texten uppdaterad till 60s
+                eko_mode = st.checkbox("Batterisparläge (60s)", value=False, key="eko_mode_check")
                 
-                if st.button("Nollställ mätningar"):
+                if st.button("Nollställ mätningar", key="reset_btn"):
                     st.session_state.station_log = {}
                     st.session_state.last_passed_update = None
                     st.session_state.list_reversed_auto = False
                     st.rerun()
 
             # --- 3. HÄMTA GPS ---
-            interval = 10000 if eko_mode else 2000
+            # ÄNDRAT HÄR: 60000 ms (60s) eller 20000 ms (20s)
+            interval = 60000 if eko_mode else 20000
             st_autorefresh(interval=interval, key="gps_refresher")
             
-            # GPS utan extra parametrar
             gps_data = get_geolocation(component_key='my_gps')
             
             my_lat, my_lon = 0, 0
@@ -1785,10 +1789,10 @@ def render_kororder_page():
                 col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
             else:
                 st.warning("📡 Söker GPS...")
-                # Simulator fallback om man vill testa utan GPS
                 if valid_lats:
                     max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
-                    my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l)
+                    # Unik key på slidern
+                    my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l, key="sim_slider")
                     my_lon = 15.0
 
             # --- 6. VISA LISTAN ---
@@ -1843,7 +1847,7 @@ def render_kororder_page():
                     border = "#ffcc00"
                     st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                # Vanlig sträng-konkatenering (SÄKRAST)
+                # BOMSÄKER HTML (Inga triple quotes)
                 card_html = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
                 card_html += '<div style="display:flex; justify-content:space-between; align-items:center;">'
                 card_html += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
