@@ -1696,171 +1696,228 @@ def render_kororder_page():
     
     st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
     
-    # --- 0. INITIALISERA MINNE ---
+    # --- 0. INITIALISERA MINNE (SESSION STATE) ---
+    # Dessa variabler överlever när sidan laddas om automatiskt
     if 'station_log' not in st.session_state:
         st.session_state.station_log = {} 
     if 'last_passed_update' not in st.session_state:
         st.session_state.last_passed_update = None 
     if 'list_reversed_auto' not in st.session_state:
         st.session_state.list_reversed_auto = False
+    
+    # NYTT: Vi sparar vilka stationer som är "klara" så bocken stannar kvar
+    if 'passed_stations_set' not in st.session_state:
+        st.session_state.passed_stations_set = set()
 
-    # --- 1. SETUP ---
+    # NYTT: Vi sparar inläst data så du slipper ladda upp filen igen vid refresh
+    if 'current_kororder_data' not in st.session_state:
+        st.session_state.current_kororder_data = None
+
+    # --- 1. SETUP & UPPLADDNING ---
     if not STATION_DB:
         st.warning("⚠️ Varning: 'stations.json' saknas. GPS-matchning fungerar ej.")
 
+    # Filuppladdare
     uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
     
+    # Om ny fil laddas upp, tolka och spara i minnet
     if uploaded_file:
-        try:
-            # Läs in data
-            data = parse_kororder_new(uploaded_file)
-            stops = data['stops']
-            
-            # --- 2. INSTÄLLNINGAR ---
-            with st.sidebar:
-                st.write("---")
-                st.subheader("Inställningar")
-                
-                manual_reverse = st.checkbox("Tvinga omvänd ordning", 
-                                           value=False, 
-                                           help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.",
-                                           key="manual_rev_check")
-                
-                # ÄNDRAT HÄR: Texten uppdaterad till 60s
-                eko_mode = st.checkbox("Batterisparläge (60s)", value=False, key="eko_mode_check")
-                
-                if st.button("Nollställ mätningar", key="reset_btn"):
-                    st.session_state.station_log = {}
-                    st.session_state.last_passed_update = None
-                    st.session_state.list_reversed_auto = False
-                    st.rerun()
+        # Bara om vi inte redan har data eller om det är en ny fil
+        if st.session_state.current_kororder_data is None:
+            try:
+                data = parse_kororder_new(uploaded_file)
+                st.session_state.current_kororder_data = data
+                # Nollställ gamla bockar om ny fil laddas
+                st.session_state.passed_stations_set = set()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Kunde inte läsa PDF: {e}")
 
-            # --- 3. HÄMTA GPS ---
-            # ÄNDRAT HÄR: 60000 ms (60s) eller 20000 ms (20s)
-            interval = 60000 if eko_mode else 20000
-            st_autorefresh(interval=interval, key="gps_refresher")
+    # --- 2. ANVÄND SPARAD DATA ---
+    # Här jobbar vi mot minnet istället för filen direkt
+    if st.session_state.current_kororder_data:
+        data = st.session_state.current_kororder_data
+        stops = data['stops']
+        
+        # --- 3. INSTÄLLNINGAR (SIDEBAR) ---
+        with st.sidebar:
+            st.write("---")
+            st.subheader("Inställningar")
             
-            gps_data = get_geolocation(component_key='my_gps')
+            manual_reverse = st.checkbox("Tvinga omvänd ordning", 
+                                         value=False, 
+                                         help="Kryssa i om du kör åt motsatt håll mot vad körordern visar.",
+                                         key="manual_rev_check")
             
-            my_lat, my_lon = 0, 0
-            has_gps = False
+            eko_mode = st.checkbox("Batterisparläge (60s)", value=False, key="eko_mode_check")
             
-            if gps_data and 'coords' in gps_data:
+            if st.button("Nollställ mätningar", key="reset_btn"):
+                st.session_state.station_log = {}
+                st.session_state.last_passed_update = None
+                st.session_state.list_reversed_auto = False
+                st.session_state.passed_stations_set = set() # Nollställ bockarna
+                st.rerun()
+
+        # --- 4. HÄMTA GPS (AUTO-REFRESH) ---
+        interval = 60000 if eko_mode else 10000 # Uppdatera lite oftare (10s) för bättre respons
+        st_autorefresh(interval=interval, key="gps_refresher")
+        
+        gps_data = get_geolocation(component_key='my_gps')
+        
+        my_lat, my_lon = 0, 0
+        has_gps = False
+        
+        if gps_data and 'coords' in gps_data:
+            my_lat = gps_data['coords']['latitude']
+            my_lon = gps_data['coords']['longitude']
+            # Enkel koll att vi inte fick "0,0" från havet
+            if my_lat != 0:
                 has_gps = True
-                my_lat = gps_data['coords']['latitude']
-                my_lon = gps_data['coords']['longitude']
 
-            # --- 4. RIKTNING & VÄNDNING ---
-            valid_stops = [s for s in stops if s['lat'] != 0]
-            should_reverse = False
-            auto_msg = ""
+        # --- 5. RIKTNING & VÄNDNING ---
+        valid_stops = [s for s in stops if s['lat'] != 0]
+        should_reverse = False
+        auto_msg = ""
 
-            if has_gps and len(valid_stops) >= 2 and not manual_reverse:
-                first_stop = valid_stops[0]
-                last_stop = valid_stops[-1]
-                
-                dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
-                dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
-                
-                if dist_to_end < dist_to_start - 5000:
-                    should_reverse = True
-                    auto_msg = f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt."
-
-            if manual_reverse or should_reverse:
-                stops = stops[::-1]
-                data['stops'] = stops
+        # Automatisk vändning (bara om vi har GPS)
+        if has_gps and len(valid_stops) >= 2 and not manual_reverse and not st.session_state.list_reversed_auto:
+            first_stop = valid_stops[0]
+            last_stop = valid_stops[-1]
             
-            if auto_msg:
-                st.info(auto_msg)
-
-            # --- 5. ANALYS AV RIKTNING ---
-            valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
-            direction_south = True 
-            if len(valid_lats) >= 2:
-                if valid_lats[0] < valid_lats[-1]:
-                    direction_south = False
+            dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
+            dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
             
-            st.subheader(f"Tåg: {data['train_id']}")
+            # Om vi är närmare slutet än början (med marginal 5km)
+            if dist_to_end < dist_to_start - 5000:
+                should_reverse = True
+                st.session_state.list_reversed_auto = True # Kom ihåg att vi vänt
+                auto_msg = f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt."
+
+        # Tillämpa vändning
+        if manual_reverse or st.session_state.list_reversed_auto:
+            stops = stops[::-1] # Vänd listan tillfälligt för visning
+        
+        if auto_msg:
+            st.toast(auto_msg) # Snyggare popup
+
+        # --- 6. ANALYS AV RIKTNING (För passage-logik) ---
+        valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
+        direction_south = True 
+        if len(valid_lats) >= 2:
+            if valid_lats[0] < valid_lats[-1]:
+                direction_south = False
+        
+        st.subheader(f"Tåg: {data['train_id']}")
+        
+        if has_gps:
+            acc = gps_data['coords']['accuracy']
+            col1, col2 = st.columns(2)
+            col1.success(f"GPS Aktiv (±{int(acc)}m)")
+            col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
+        else:
+            st.warning("📡 Söker GPS... (Stå utomhus eller vid fönster)")
+            # Simulator om ingen GPS finns
+            if valid_lats:
+                max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
+                my_lat = st.slider("Simulator (Test)", min_l, max_l, max_l if direction_south else min_l, key="sim_slider")
+                my_lon = 15.0
+
+        # --- 7. VISA LISTAN & LOGIK ---
+        nearest_dist = 999999
+
+        for i, stop in enumerate(stops):
+            dist = 999999
+            if stop['lat'] != 0:
+                dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
             
-            if has_gps:
-                acc = gps_data['coords']['accuracy']
-                col1, col2 = st.columns(2)
-                col1.success(f"GPS Aktiv (±{int(acc)}m)")
-                col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
-            else:
-                st.warning("📡 Söker GPS...")
-                if valid_lats:
-                    max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
-                    # Unik key på slidern
-                    my_lat = st.slider("Simulator", min_l, max_l, max_l if direction_south else min_l, key="sim_slider")
-                    my_lon = 15.0
+            if dist < nearest_dist:
+                nearest_dist = dist
 
-            # --- 6. VISA LISTAN ---
-            nearest_dist = 999999
+            # LOGIK: Har vi passerat stationen?
+            just_passed_now = False
+            
+            # Kolla bara GPS-logik om vi faktiskt har en position
+            if stop['lat'] != 0 and (has_gps or my_lat != 0):
+                if direction_south:
+                    if my_lat < stop['lat']: just_passed_now = True
+                else:
+                    if my_lat > stop['lat']: just_passed_now = True
+            
+            # UPPDATERA MINNET: Om vi passerar nu, spara det för alltid
+            if just_passed_now:
+                st.session_state.passed_stations_set.add(stop['name'])
 
-            for i, stop in enumerate(stops):
-                dist = 999999
-                if stop['lat'] != 0:
-                    dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
+            # HÄMTA STATUS: Är den passerad (nu eller tidigare)?
+            is_checked = stop['name'] in st.session_state.passed_stations_set
+
+            # Hastighetslogik (Körs bara första gången vi passerar)
+            if just_passed_now and stop['name'] not in st.session_state.station_log:
+                now = datetime.now()
+                speed = None
+                last = st.session_state.last_passed_update
                 
-                if dist < nearest_dist:
-                    nearest_dist = dist
-
-                passed = False
-                if stop['lat'] != 0:
-                    if direction_south:
-                        if my_lat < stop['lat']: passed = True
-                    else:
-                        if my_lat > stop['lat']: passed = True
+                if last:
+                    d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
+                    h = (now - last['time']).total_seconds() / 3600.0
+                    # Rimlighetskoll: Inte oändlig hastighet
+                    if h > 0.001 and d_m > 100:
+                        speed = int((d_m/1000.0) / h)
                 
-                # Hastighetslogik
-                if passed and stop['name'] not in st.session_state.station_log:
-                    now = datetime.now()
-                    speed = None
-                    last = st.session_state.last_passed_update
-                    
-                    if last:
-                        d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
-                        h = (now - last['time']).total_seconds() / 3600.0
-                        if h > 0.001 and d_m > 100:
-                            speed = int((d_m/1000.0) / h)
-                    
-                    st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
-                    st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
-                    st.rerun()
+                st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
+                st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
+                # Ingen rerun här för att undvika loopar, autorefresh tar hand om UI nästa gång
 
-                # UI Variabler
-                bg = ""
-                icon = "⚪"
-                border = "#ddd"
-                info_text = ""
-                
-                log = st.session_state.station_log.get(stop['name'])
-                
-                if passed:
-                    icon = "✅"
-                    bg = "rgba(0, 255, 0, 0.05)"
-                    if log and log['speed']: info_text = "Snitt: <b>" + str(log['speed']) + " km/h</b>"
-                elif dist < 2500:
-                    icon = "📍" 
-                    bg = "rgba(255, 255, 0, 0.2)"
-                    border = "#ffcc00"
-                    st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
+            # --- UI RENDERING AV KORTET ---
+            bg = ""
+            icon = "⚪"
+            border = "#444" # Mörkare border standard
+            info_text = ""
+            title_color = "#ffffff"
+            
+            log = st.session_state.station_log.get(stop['name'])
+            
+            if is_checked:
+                icon = "✅"
+                bg = "rgba(0, 255, 0, 0.1)" # Svag grön
+                border = "#00cc00"
+                if log and log['speed']: 
+                    info_text = f"Snitt: <b>{log['speed']} km/h</b>"
+            
+            elif dist < 3000: # Inom 3 km - markera gult/orange
+                icon = "📍" 
+                bg = "rgba(255, 200, 0, 0.15)"
+                border = "#ffcc00"
+                title_color = "#ffcc00"
+                st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
 
-                # BOMSÄKER HTML (Inga triple quotes)
-                card_html = '<div style="padding: 10px; border-radius: 8px; border: 1px solid ' + border + '; margin-bottom: 8px; background-color: ' + bg + ';">'
-                card_html += '<div style="display:flex; justify-content:space-between; align-items:center;">'
-                card_html += '<div><h3 style="margin:0; padding:0;">' + icon + ' ' + stop['name'] + '</h3><small>' + info_text + '</small></div>'
-                card_html += '<div style="text-align:right;">' + stop['time'] + '</div>'
-                card_html += '</div></div>'
-
-                st.markdown(card_html, unsafe_allow_html=True)
-                
-                if stop['warnings']:
-                    for w in stop['warnings']: st.error(f"⚠️ {w}")
-
-        except Exception as e:
-            st.error(f"Fel: {e}")
+            # HTML Kort (Förenklad och robust style)
+            card_html = f"""
+            <div style="
+                padding: 12px; 
+                border-radius: 8px; 
+                border: 1px solid {border}; 
+                margin-bottom: 8px; 
+                background-color: {bg};
+            ">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="margin:0; padding:0; font-size: 18px; color: {title_color};">
+                            {icon} {stop['name']}
+                        </h3>
+                        <small style="color: #bbb;">{info_text}</small>
+                    </div>
+                    <div style="text-align:right; font-weight:bold; font-size: 16px;">
+                        {stop['time']}
+                    </div>
+                </div>
+            </div>
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
+            
+            # Varningar
+            if stop['warnings']:
+                for w in stop['warnings']: 
+                    st.error(f"⚠️ {w}")
 
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
