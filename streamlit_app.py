@@ -1822,102 +1822,110 @@ def render_kororder_page():
                 my_lat = st.slider("Simulator (Test)", min_l, max_l, max_l if direction_south else min_l, key="sim_slider")
                 my_lon = 15.0
 
-        # --- 7. VISA LISTAN & LOGIK ---
-        nearest_dist = 999999
-
-        for i, stop in enumerate(stops):
-            dist = 999999
-            if stop['lat'] != 0:
-                dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
+# --- 7. VISA LISTAN & LOGIK (Sekvens-baserad) ---
             
-            if dist < nearest_dist:
-                nearest_dist = dist
-
-            # LOGIK: Har vi passerat stationen?
-            just_passed_now = False
+            # 1. Hitta vilken station i listan vi är närmast just nu
+            closest_index = 0
+            min_dist = 999999
             
-            # Kolla bara GPS-logik om vi faktiskt har en position
-            if stop['lat'] != 0 and (has_gps or my_lat != 0):
-                if direction_south:
-                    if my_lat < stop['lat']: just_passed_now = True
-                else:
-                    if my_lat > stop['lat']: just_passed_now = True
-            
-            # UPPDATERA MINNET: Om vi passerar nu, spara det för alltid
-            if just_passed_now:
-                st.session_state.passed_stations_set.add(stop['name'])
+            for idx, stop in enumerate(stops):
+                if stop['lat'] != 0:
+                    d = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
+                    if d < min_dist:
+                        min_dist = d
+                        closest_index = idx
 
-            # HÄMTA STATUS: Är den passerad (nu eller tidigare)?
-            is_checked = stop['name'] in st.session_state.passed_stations_set
+            # Om vi saknar GPS (0,0) eller min_dist är enormt stort, lita inte blint på detta
+            if not has_gps and my_lat == 0:
+                closest_index = -1 # Ingen aktiv logik utan GPS
 
-            # Hastighetslogik (Körs bara första gången vi passerar)
-            if just_passed_now and stop['name'] not in st.session_state.station_log:
-                now = datetime.now()
-                speed = None
-                last = st.session_state.last_passed_update
+            for i, stop in enumerate(stops):
+                # Beräkna avstånd för visning
+                dist = 999999
+                if stop['lat'] != 0:
+                    dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
+
+                # LOGIK: 
+                # Om index (i) är mindre än indexet för stationen vi är närmast (closest_index),
+                # då har vi passerat den stationen (eftersom vi följer en linje).
+                is_passed = False
+                is_current = False
                 
-                if last:
-                    d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
-                    h = (now - last['time']).total_seconds() / 3600.0
-                    # Rimlighetskoll: Inte oändlig hastighet
-                    if h > 0.001 and d_m > 100:
-                        speed = int((d_m/1000.0) / h)
+                if has_gps:
+                    if i < closest_index:
+                        is_passed = True
+                    elif i == closest_index:
+                        is_current = True
                 
-                st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
-                st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
-                # Ingen rerun här för att undvika loopar, autorefresh tar hand om UI nästa gång
+                # Spara statistik om vi passerar
+                if is_passed and stop['name'] not in st.session_state.station_log:
+                    now = datetime.now()
+                    speed = None
+                    last = st.session_state.last_passed_update
+                    if last:
+                        d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
+                        h = (now - last['time']).total_seconds() / 3600.0
+                        if h > 0.001 and d_m > 100:
+                            speed = int((d_m/1000.0) / h)
+                    
+                    st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
+                    st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
 
-            # --- UI RENDERING AV KORTET ---
-            bg = ""
-            icon = "⚪"
-            border = "#444" # Mörkare border standard
-            info_text = ""
-            title_color = "#ffffff"
-            
-            log = st.session_state.station_log.get(stop['name'])
-            
-            if is_checked:
-                icon = "✅"
-                bg = "rgba(0, 255, 0, 0.1)" # Svag grön
-                border = "#00cc00"
-                if log and log['speed']: 
-                    info_text = f"Snitt: <b>{log['speed']} km/h</b>"
-            
-            elif dist < 3000: # Inom 3 km - markera gult/orange
-                icon = "📍" 
-                bg = "rgba(255, 200, 0, 0.15)"
-                border = "#ffcc00"
-                title_color = "#ffcc00"
-                st.info(f"👉 Nästa: **{stop['name']}** ({int(dist)} m)")
+                # --- UI RENDERING ---
+                bg = ""
+                icon = "⚪"
+                border = "#444"
+                info_text = ""
+                title_color = "#ffffff"
+                
+                log = st.session_state.station_log.get(stop['name'])
+                
+                if is_passed:
+                    icon = "✅"
+                    bg = "rgba(0, 255, 0, 0.1)"
+                    border = "#00cc00"
+                    if log and log['speed']: 
+                        info_text = f"Snitt: <b>{log['speed']} km/h</b>"
+                
+                elif is_current:
+                    # Den station vi är närmast just nu (eller på väg in till)
+                    icon = "📍" 
+                    bg = "rgba(255, 200, 0, 0.15)"
+                    border = "#ffcc00"
+                    title_color = "#ffcc00"
+                    st.info(f"👉 Nästa/Nu: **{stop['name']}** ({int(dist)} m)")
+                
+                elif dist < 5000: 
+                    # Inte närmast, men inom 5km (t.ex. nästa station är nära)
+                    info_text = f"Avstånd: {int(dist)} m"
 
-            # HTML Kort (Förenklad och robust style)
-            card_html = f"""
-            <div style="
-                padding: 12px; 
-                border-radius: 8px; 
-                border: 1px solid {border}; 
-                margin-bottom: 8px; 
-                background-color: {bg};
-            ">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; padding:0; font-size: 18px; color: {title_color};">
-                            {icon} {stop['name']}
-                        </h3>
-                        <small style="color: #bbb;">{info_text}</small>
-                    </div>
-                    <div style="text-align:right; font-weight:bold; font-size: 16px;">
-                        {stop['time']}
+                # HTML Kort
+                card_html = f"""
+                <div style="
+                    padding: 12px; 
+                    border-radius: 8px; 
+                    border: 1px solid {border}; 
+                    margin-bottom: 8px; 
+                    background-color: {bg};
+                ">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 style="margin:0; padding:0; font-size: 18px; color: {title_color};">
+                                {icon} {stop['name']}
+                            </h3>
+                            <small style="color: #bbb;">{info_text}</small>
+                        </div>
+                        <div style="text-align:right; font-weight:bold; font-size: 16px;">
+                            {stop['time']}
+                        </div>
                     </div>
                 </div>
-            </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
-            
-            # Varningar
-            if stop['warnings']:
-                for w in stop['warnings']: 
-                    st.error(f"⚠️ {w}")
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+                
+                if stop['warnings']:
+                    for w in stop['warnings']: 
+                        st.error(f"⚠️ {w}")
 
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
