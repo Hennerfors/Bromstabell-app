@@ -1702,13 +1702,16 @@ def render_kororder_page():
         st.session_state.last_passed_update = None 
     if 'list_reversed_auto' not in st.session_state:
         st.session_state.list_reversed_auto = False
-    
-    # Spara inläst data
+    if 'passed_stations_set' not in st.session_state:
+        st.session_state.passed_stations_set = set()
     if 'current_kororder_data' not in st.session_state:
         st.session_state.current_kororder_data = None
-    # Spara namnet på filen så vi vet när du byter körorder
     if 'uploaded_filename' not in st.session_state:
         st.session_state.uploaded_filename = None
+        
+    # NYTT: Minne för att känna av när vi åker IFRÅN stationen
+    if 'target_tracking' not in st.session_state:
+        st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
 
     # --- 1. SETUP & UPPLADDNING ---
     if not STATION_DB:
@@ -1716,16 +1719,17 @@ def render_kororder_page():
 
     uploaded_file = st.file_uploader("Ladda upp Körorder (PDF)", type="pdf", key="ko_uploader")
     
-    # Om ny fil laddas upp (namnet skiljer sig från minnet)
     if uploaded_file and st.session_state.uploaded_filename != uploaded_file.name:
         try:
             data = parse_kororder_new(uploaded_file)
             st.session_state.current_kororder_data = data
             st.session_state.uploaded_filename = uploaded_file.name
-            # Nollställ mätningar när ny fil laddas in
+            # Nollställ allt när ny fil laddas
             st.session_state.station_log = {}
             st.session_state.last_passed_update = None
             st.session_state.list_reversed_auto = False
+            st.session_state.passed_stations_set = set()
+            st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
             st.rerun()
         except Exception as e:
             st.error(f"Kunde inte läsa PDF: {e}")
@@ -1743,14 +1747,16 @@ def render_kororder_page():
             manual_reverse = st.checkbox("Tvinga omvänd ordning", value=False, key="manual_rev_check")
             eko_mode = st.checkbox("Batterisparläge (60s)", value=False, key="eko_mode_check")
             
-            if st.button("Nollställ mätningar", key="reset_btn"):
+            if st.button("Nollställ mätningar & rutt", key="reset_btn"):
                 st.session_state.station_log = {}
                 st.session_state.last_passed_update = None
                 st.session_state.list_reversed_auto = False
+                st.session_state.passed_stations_set = set()
+                st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
                 st.rerun()
 
         # --- 4. HÄMTA GPS (AUTO-REFRESH) ---
-        interval = 60000 if eko_mode else 10000 # Uppdaterar var 10:e sekund
+        interval = 60000 if eko_mode else 10000 
         st_autorefresh(interval=interval, key="gps_refresher")
         
         gps_data = get_geolocation(component_key='my_gps')
@@ -1766,9 +1772,6 @@ def render_kororder_page():
 
         # --- 5. RIKTNING & VÄNDNING ---
         valid_stops = [s for s in stops if s['lat'] != 0]
-        should_reverse = False
-        auto_msg = ""
-
         if has_gps and len(valid_stops) >= 2 and not manual_reverse and not st.session_state.list_reversed_auto:
             first_stop = valid_stops[0]
             last_stop = valid_stops[-1]
@@ -1776,81 +1779,75 @@ def render_kororder_page():
             dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
             
             if dist_to_end < dist_to_start - 5000:
-                should_reverse = True
                 st.session_state.list_reversed_auto = True
-                auto_msg = f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt."
+                st.toast(f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt.")
 
         if manual_reverse or st.session_state.list_reversed_auto:
             stops = stops[::-1]
-        
-        if auto_msg:
-            st.toast(auto_msg)
-
-        # --- 6. UI RIKTNING OCH GPS-STATUS ---
-        valid_lats = [s['lat'] for s in stops if s['lat'] != 0]
-        direction_south = True 
-        if len(valid_lats) >= 2:
-            if valid_lats[0] < valid_lats[-1]:
-                direction_south = False
         
         st.subheader(f"Tåg: {data['train_id']}")
         
         if has_gps:
             acc = gps_data['coords']['accuracy']
-            col1, col2 = st.columns(2)
-            col1.success(f"GPS Aktiv (±{int(acc)}m)")
-            col2.caption(f"Riktning: {'Söderut ⬇️' if direction_south else 'Norrut ⬆️'}")
+            st.success(f"GPS Aktiv (±{int(acc)}m)")
         else:
-            st.warning("📡 Söker GPS... (Stå utomhus eller vid fönster)")
-            if valid_lats:
-                max_l, min_l = max(valid_lats)+0.05, min(valid_lats)-0.05
-                my_lat = st.slider("Simulator (Test)", min_l, max_l, max_l if direction_south else min_l, key="sim_slider")
-                my_lon = 15.0
+            st.warning("📡 Söker GPS...")
 
-        # --- 7. VISA LISTAN & LOGIK (Sekvens-baserad) ---
-        # HÄR VAR FELET INNAN. Detta block är nu korrekt indraget.
+        # --- 6. SMART LOGIK (EN I TAGET!) ---
         
-        closest_index = 0
-        min_dist = 999999
-        
-        for idx, stop in enumerate(stops):
-            if stop['lat'] != 0:
-                d = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
-                if d < min_dist:
-                    min_dist = d
-                    closest_index = idx
+        # Hitta den FÖRSTA stationen i listan som inte är avbockad ännu
+        target_idx = -1
+        for i, stop in enumerate(stops):
+            if stop['name'] not in st.session_state.passed_stations_set:
+                target_idx = i
+                break
 
-        if not has_gps and my_lat == 0:
-            closest_index = -1
+        if has_gps and target_idx != -1:
+            target_stop = stops[target_idx]
+            
+            if target_stop['lat'] != 0:
+                dist_now = get_distance_meters(my_lat, my_lon, target_stop['lat'], target_stop['lon'])
+                
+                # Om appen precis bytt till en ny station -> nollställ mätaren
+                if st.session_state.target_tracking['name'] != target_stop['name']:
+                    st.session_state.target_tracking = {'name': target_stop['name'], 'min_dist': dist_now}
+                
+                # Uppdatera minnet om vi kommit ÄNNU närmare stationen
+                if dist_now < st.session_state.target_tracking['min_dist']:
+                    st.session_state.target_tracking['min_dist'] = dist_now
+                
+                min_d = st.session_state.target_tracking['min_dist']
+                
+                # AVBOCKNINGS-REGELN:
+                # Om vi har varit inom 3km, och nu har åkt 100 meter BORT från vår närmaste punkt -> Då har vi passerat!
+                if min_d < 3000 and dist_now > (min_d + 100):
+                    st.session_state.passed_stations_set.add(target_stop['name'])
+                    
+                    # Beräkna hastighet
+                    now = datetime.now()
+                    speed = None
+                    last = st.session_state.last_passed_update
+                    if last:
+                        d_m = get_distance_meters(last['lat'], last['lon'], target_stop['lat'], target_stop['lon'])
+                        h = (now - last['time']).total_seconds() / 3600.0
+                        if h > 0.001 and d_m > 100:
+                            speed = int((d_m/1000.0) / h)
+                    
+                    st.session_state.station_log[target_stop['name']] = {"time": now, "speed": speed}
+                    st.session_state.last_passed_update = {"lat": target_stop['lat'], "lon": target_stop['lon'], "time": now}
+                    
+                    # Ladda om skärmen direkt så den blir grön
+                    st.rerun()
 
+        # --- 7. RITA UT LISTAN ---
         for i, stop in enumerate(stops):
             dist = 999999
-            if stop['lat'] != 0:
+            if stop['lat'] != 0 and has_gps:
                 dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
 
-            is_passed = False
-            is_current = False
-            
-            if has_gps or my_lat != 0:
-                if i < closest_index:
-                    is_passed = True
-                elif i == closest_index:
-                    is_current = True
-            
-            if is_passed and stop['name'] not in st.session_state.station_log:
-                now = datetime.now()
-                speed = None
-                last = st.session_state.last_passed_update
-                if last:
-                    d_m = get_distance_meters(last['lat'], last['lon'], stop['lat'], stop['lon'])
-                    h = (now - last['time']).total_seconds() / 3600.0
-                    if h > 0.001 and d_m > 100:
-                        speed = int((d_m/1000.0) / h)
-                
-                st.session_state.station_log[stop['name']] = {"time": now, "speed": speed}
-                st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
+            is_passed = stop['name'] in st.session_state.passed_stations_set
+            is_current = (i == target_idx) # Den vi kör mot just nu
 
-            # --- UI RENDERING ---
             bg = ""
             icon = "⚪"
             border = "#444"
@@ -1871,19 +1868,20 @@ def render_kororder_page():
                 bg = "rgba(255, 200, 0, 0.15)"
                 border = "#ffcc00"
                 title_color = "#ffcc00"
-                st.info(f"👉 Nästa/Nu: **{stop['name']}** ({int(dist)} m)")
+                if dist != 999999:
+                    # Visar även minsta avstånd så du kan se att den minns
+                    min_record = ""
+                    if st.session_state.target_tracking['name'] == stop['name']:
+                        min_record = f" | Närmast hittills: {int(st.session_state.target_tracking['min_dist'])}m"
+                    info_text = f"Avstånd nu: {int(dist)} m <span style='color:gray; font-size:10px;'>{min_record}</span>"
+                else:
+                    info_text = "Saknar GPS i databasen"
             
-            elif dist < 5000: 
+            elif dist < 5000 and has_gps: 
                 info_text = f"Avstånd: {int(dist)} m"
 
             card_html = f"""
-            <div style="
-                padding: 12px; 
-                border-radius: 8px; 
-                border: 1px solid {border}; 
-                margin-bottom: 8px; 
-                background-color: {bg};
-            ">
+            <div style="padding: 12px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 8px; background-color: {bg};">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <h3 style="margin:0; padding:0; font-size: 18px; color: {title_color};">
@@ -1899,10 +1897,21 @@ def render_kororder_page():
             """
             st.markdown(card_html, unsafe_allow_html=True)
             
+            # --- MANUELL KNAPP (Bara på den aktuella stationen) ---
+            if is_current:
+                col1, col2 = st.columns([3, 2])
+                with col2:
+                    if st.button(f"✅ Bocka av manuellt", key=f"man_pass_{i}", help="Tryck här om GPS:en inte hänger med"):
+                        st.session_state.passed_stations_set.add(stop['name'])
+                        now = datetime.now()
+                        st.session_state.station_log[stop['name']] = {"time": now, "speed": None}
+                        st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
+                        st.rerun()
+            
             if stop['warnings']:
                 for w in stop['warnings']: 
                     st.error(f"⚠️ {w}")
-
+                    
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
 # ==============================================================================
