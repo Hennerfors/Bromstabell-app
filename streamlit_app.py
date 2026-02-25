@@ -307,6 +307,11 @@ def parse_kororder_new(file_obj):
                 station_name = col_station.replace('\n', ' ').strip() if col_station else ""
                 safety_text = col_safety.replace('\n', ' ').strip() if col_safety else ""
                 
+                # --- NY KOD: Ignorera tabellrubriker ---
+                if "trafikplats" in station_name.lower() or "driftplats" in station_name.lower() or "säkerhetsorder" in station_name.lower():
+                    continue # Hoppa över denna rad helt
+                # ---------------------------------------
+                
                 # Ny station hittad
                 if station_name and len(station_name) > 1:
                     coords = STATION_DB.get(station_name, {"lat": 0, "lon": 0})
