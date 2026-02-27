@@ -1700,7 +1700,7 @@ def render_kororder_page():
     
     st.markdown("<h1 style='text-align: center;'>🚆 Körorder Pilot</h1>", unsafe_allow_html=True)
     
-    # --- 0. INITIALISERA MINNE (SESSION STATE) ---
+# --- 0. INITIALISERA MINNE (SESSION STATE) ---
     if 'station_log' not in st.session_state:
         st.session_state.station_log = {} 
     if 'last_passed_update' not in st.session_state:
@@ -1713,10 +1713,12 @@ def render_kororder_page():
         st.session_state.current_kororder_data = None
     if 'uploaded_filename' not in st.session_state:
         st.session_state.uploaded_filename = None
-        
-    # NYTT: Minne för att känna av när vi åker IFRÅN stationen
     if 'target_tracking' not in st.session_state:
         st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
+        
+    # NYTT: Minne för att GPS:en inte ska blinka bort
+    if 'last_lat' not in st.session_state: st.session_state.last_lat = 0
+    if 'last_lon' not in st.session_state: st.session_state.last_lon = 0
 
     # --- 1. SETUP & UPPLADDNING ---
     if not STATION_DB:
@@ -1762,41 +1764,55 @@ def render_kororder_page():
 
         # --- 4. HÄMTA GPS (AUTO-REFRESH) ---
         interval = 60000 if eko_mode else 10000 
-        st_autorefresh(interval=interval, key="gps_refresher")
+        refresh_count = st_autorefresh(interval=interval, key="gps_refresher")
         
-        gps_data = get_geolocation(component_key='my_gps')
+        # Tvinga fram ny GPS-sökning varje gång
+        gps_data = get_geolocation(component_key=f'my_gps_{refresh_count}')
         
-        my_lat, my_lon = 0, 0
         has_gps = False
         
         if gps_data and 'coords' in gps_data:
-            my_lat = gps_data['coords']['latitude']
-            my_lon = gps_data['coords']['longitude']
-            if my_lat != 0:
-                has_gps = True
+            # Spara position OCH exakthet i minnet
+            st.session_state.last_lat = gps_data['coords']['latitude']
+            st.session_state.last_lon = gps_data['coords']['longitude']
+            st.session_state.last_acc = gps_data['coords']['accuracy']
+            
+        # Hämta från minnet (om vi tappat signalen en sekund används den senaste)
+        my_lat = st.session_state.get('last_lat', 0)
+        my_lon = st.session_state.get('last_lon', 0)
+        my_acc = st.session_state.get('last_acc', 0)
+        
+        if my_lat != 0 and my_lon != 0:
+            has_gps = True
 
         # --- 5. RIKTNING & VÄNDNING ---
         valid_stops = [s for s in stops if s['lat'] != 0]
+        
+        # Vänd bara om vi står still på starten och har 0 avbockade stationer!
         if has_gps and len(valid_stops) >= 2 and not manual_reverse and not st.session_state.list_reversed_auto:
-            first_stop = valid_stops[0]
-            last_stop = valid_stops[-1]
-            dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
-            dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
-            
-            if dist_to_end < dist_to_start - 5000:
-                st.session_state.list_reversed_auto = True
-                st.toast(f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt.")
+            if len(st.session_state.passed_stations_set) == 0:
+                first_stop = valid_stops[0]
+                last_stop = valid_stops[-1]
+                dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
+                dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
+                
+                if dist_to_end < dist_to_start - 5000:
+                    st.session_state.list_reversed_auto = True
+                    st.toast(f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt.")
 
         if manual_reverse or st.session_state.list_reversed_auto:
             stops = stops[::-1]
         
+        # --- UI: RITA UT TÅGNUMMER OCH GPS-STATUS ---
         st.subheader(f"Tåg: {data['train_id']}")
         
         if has_gps:
-            acc = gps_data['coords']['accuracy']
-            st.success(f"GPS Aktiv (±{int(acc)}m)")
+            # Använder det sparade minnet för accuracy så det inte kraschar
+            st.success(f"GPS Aktiv (±{int(my_acc)}m)")
         else:
             st.warning("📡 Söker GPS...")
+
+        # --- 6. SMART LOGIK (EN I TAGET!) ---
 
         # --- 6. SMART LOGIK (EN I TAGET!) ---
         
