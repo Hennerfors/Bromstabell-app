@@ -283,53 +283,84 @@ def parse_kororder_new(file_obj):
     current_station = None
     
     with pdfplumber.open(file_obj) as pdf:
-        # Försök hitta Tåg-ID på första sidan
+        # Läs in första sidan för att hitta tågnumret
         try:
             page1_text = pdf.pages[0].extract_text()
-            id_match = re.search(r"Train-ID:\s*([\d\s]+)", page1_text)
-            if id_match: parsed_data["train_id"] = id_match.group(1)
+            
+            # NY LOGIK: Leta efter t.ex. "GT 49705", "RST 1234", eller "Tåg 567"
+            id_match = re.search(r"\b([A-Z]{2,3}\s\d{2,6}|Tåg\s\d{2,6})\b", page1_text)
+            
+            if id_match: 
+                parsed_data["train_id"] = id_match.group(1)
+            else:
+                # Fallback: Om den inte hittar GT/RST, leta efter det interna Train-ID:t
+                fallback_match = re.search(r"Train-ID:\s*([\d]+)", page1_text)
+                if fallback_match: 
+                    parsed_data["train_id"] = f"ID: {fallback_match.group(1)}"
         except:
             pass
 
         for page in pdf.pages:
             table = page.extract_table()
+            # ... (Resten av koden här under är oförändrad) ...
             if not table: continue
             
             for row in table:
                 # Struktur: [Plats, Ank, Avg, Övrigt, Säkerhet]
-                # Kontrollera att raden har tillräckligt många kolumner
-                if len(row) < 5: continue
+                if len(row) < 4: continue
                 
                 col_station = row[0]
-                col_avg = row[2]
-                col_safety = row[4]
+                col_ank = row[1] if len(row) > 1 else ""
+                col_avg = row[2] if len(row) > 2 else ""
+                col_other = row[3] if len(row) > 3 else ""
+                col_safety = row[4] if len(row) > 4 else ""
                 
                 station_name = col_station.replace('\n', ' ').strip() if col_station else ""
+                ank_time = col_ank.replace('\n', ' ').strip() if col_ank else ""
+                avg_time = col_avg.replace('\n', ' ').strip() if col_avg else ""
+                other_text = col_other.replace('\n', ' ').strip() if col_other else ""
                 safety_text = col_safety.replace('\n', ' ').strip() if col_safety else ""
                 
-                # --- NY KOD: Ignorera tabellrubriker ---
                 if "trafikplats" in station_name.lower() or "driftplats" in station_name.lower() or "säkerhetsorder" in station_name.lower():
-                    continue # Hoppa över denna rad helt
-                # ---------------------------------------
+                    continue 
                 
-                # Ny station hittad
                 if station_name and len(station_name) > 1:
-                    coords = STATION_DB.get(station_name, {"lat": 0, "lon": 0})
+                    # OM DET ÄR SAMMA STATION SOM PÅ FÖRRA RADEN (Slå ihop Ank/Avg)
+                    if current_station and station_name == current_station["name"]:
+                        if ank_time and ank_time not in current_station["time"]:
+                            current_station["time"] += f" / {ank_time}" if current_station["time"] else ank_time
+                        if avg_time and avg_time not in current_station["time"]:
+                            current_station["time"] += f" - {avg_time}" if current_station["time"] else avg_time
+                        
+                        if safety_text: current_station["warnings"].append(safety_text)
+                        if other_text: current_station["infos"].append(other_text)
                     
-                    if current_station: parsed_data["stops"].append(current_station)
-                    
-                    current_station = {
-                        "name": station_name,
-                        "time": col_avg.replace('\n', '') if col_avg else "",
-                        "lat": coords["lat"], "lon": coords["lon"],
-                        "warnings": []
-                    }
-                    if safety_text: current_station["warnings"].append(safety_text)
+                    # ANNARS, SKAPA NY STATION
+                    else:
+                        if current_station: parsed_data["stops"].append(current_station)
+                        
+                        coords = STATION_DB.get(station_name, {"lat": 0, "lon": 0})
+                        
+                        display_time = avg_time
+                        if not display_time: display_time = ank_time
+                        elif ank_time and ank_time != avg_time:
+                            display_time = f"{ank_time} - {avg_time}"
+                            
+                        current_station = {
+                            "name": station_name,
+                            "time": display_time,
+                            "lat": coords["lat"], "lon": coords["lon"],
+                            "warnings": [],
+                            "infos": [] # Nytt fält för "Övrigt"
+                        }
+                        if safety_text: current_station["warnings"].append(safety_text)
+                        if other_text: current_station["infos"].append(other_text)
                 
-                # Fortsättning på säkerhetsorder (raden under)
-                elif not station_name and safety_text and current_station:
-                    current_station["warnings"].append(safety_text)
-                    
+                # OM STATIONSNAMN SAKNAS MEN TEXT FINNS (T.ex. radbrytning)
+                elif current_station:
+                    if safety_text: current_station["warnings"].append(safety_text)
+                    if other_text: current_station["infos"].append(other_text)
+                
         if current_station: parsed_data["stops"].append(current_station)
             
     return parsed_data
@@ -1715,6 +1746,9 @@ def render_kororder_page():
         st.session_state.uploaded_filename = None
     if 'target_tracking' not in st.session_state:
         st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
+    # NYTT: Minne för raderade säkerhetsordrar
+    if 'dismissed_warnings' not in st.session_state:
+        st.session_state.dismissed_warnings = set()    
         
     # NYTT: Minne för att GPS:en inte ska blinka bort
     if 'last_lat' not in st.session_state: st.session_state.last_lat = 0
@@ -1760,6 +1794,7 @@ def render_kororder_page():
                 st.session_state.list_reversed_auto = False
                 st.session_state.passed_stations_set = set()
                 st.session_state.target_tracking = {'name': None, 'min_dist': 999999}
+                st.session_state.dismissed_warnings = set()
                 st.rerun()
 
         # --- 4. HÄMTA GPS (AUTO-REFRESH) ---
@@ -1786,31 +1821,20 @@ def render_kororder_page():
             has_gps = True
 
         # --- 5. RIKTNING & VÄNDNING ---
-        valid_stops = [s for s in stops if s['lat'] != 0]
-        
-        # Vänd bara om vi står still på starten och har 0 avbockade stationer!
-        if has_gps and len(valid_stops) >= 2 and not manual_reverse and not st.session_state.list_reversed_auto:
-            if len(st.session_state.passed_stations_set) == 0:
-                first_stop = valid_stops[0]
-                last_stop = valid_stops[-1]
-                dist_to_start = get_distance_meters(my_lat, my_lon, first_stop['lat'], first_stop['lon'])
-                dist_to_end = get_distance_meters(my_lat, my_lon, last_stop['lat'], last_stop['lon'])
-                
-                if dist_to_end < dist_to_start - 5000:
-                    st.session_state.list_reversed_auto = True
-                    st.toast(f"📍 Detekterade start nära {last_stop['name']}. Vände listan automatiskt.")
-
-        if manual_reverse or st.session_state.list_reversed_auto:
+        # TA BORT AUTO-VÄNDNINGEN. Den ställer bara till det vid omstarter.
+        # Nu är det BARA kryssrutan i menyn som styr riktningen.
+        if manual_reverse:
             stops = stops[::-1]
         
         # --- UI: RITA UT TÅGNUMMER OCH GPS-STATUS ---
         st.subheader(f"Tåg: {data['train_id']}")
         
         if has_gps:
-            # Använder det sparade minnet för accuracy så det inte kraschar
             st.success(f"GPS Aktiv (±{int(my_acc)}m)")
         else:
             st.warning("📡 Söker GPS...")
+
+        # --- 6. SMART LOGIK (EN I TAGET!) ---
 
         # --- 6. SMART LOGIK (EN I TAGET!) ---
 
@@ -1844,30 +1868,21 @@ def render_kororder_page():
                 if min_d < 3000 and dist_now > (min_d + 100):
                     st.session_state.passed_stations_set.add(target_stop['name'])
                     
-                    # Beräkna hastighet
+                    # Spara BARA tiden när vi passerar (Ingen snitthastighet fågelvägen)
                     now = datetime.now()
-                    speed = None
-                    last = st.session_state.last_passed_update
-                    if last:
-                        d_m = get_distance_meters(last['lat'], last['lon'], target_stop['lat'], target_stop['lon'])
-                        h = (now - last['time']).total_seconds() / 3600.0
-                        if h > 0.001 and d_m > 100:
-                            speed = int((d_m/1000.0) / h)
-                    
-                    st.session_state.station_log[target_stop['name']] = {"time": now, "speed": speed}
-                    st.session_state.last_passed_update = {"lat": target_stop['lat'], "lon": target_stop['lon'], "time": now}
+                    st.session_state.station_log[target_stop['name']] = {"time": now}
                     
                     # Ladda om skärmen direkt så den blir grön
                     st.rerun()
 
-        # --- 7. RITA UT LISTAN ---
+# --- 7. RITA UT LISTAN ---
         for i, stop in enumerate(stops):
             dist = 999999
             if stop['lat'] != 0 and has_gps:
                 dist = get_distance_meters(my_lat, my_lon, stop['lat'], stop['lon'])
 
             is_passed = stop['name'] in st.session_state.passed_stations_set
-            is_current = (i == target_idx) # Den vi kör mot just nu
+            is_current = (i == target_idx)
 
             bg = ""
             icon = "⚪"
@@ -1881,8 +1896,36 @@ def render_kororder_page():
                 icon = "✅"
                 bg = "rgba(0, 255, 0, 0.1)"
                 border = "#00cc00"
-                if log and log['speed']: 
-                    info_text = f"Snitt: <b>{log['speed']} km/h</b>"
+                info_parts = []
+                
+                if log and log.get('time'):
+                    actual_time = log['time']
+                    actual_time_str = actual_time.strftime('%H:%M')
+                    
+                    time_matches = re.findall(r'(\d{2})[:.](\d{2})', stop['time'])
+                    if time_matches:
+                        sched_h = int(time_matches[-1][0])
+                        sched_m = int(time_matches[-1][1])
+                        
+                        sched_minutes = sched_h * 60 + sched_m
+                        actual_minutes = actual_time.hour * 60 + actual_time.minute
+                        diff_minutes = actual_minutes - sched_minutes
+                        
+                        if diff_minutes < -720: diff_minutes += 1440
+                        elif diff_minutes > 720: diff_minutes -= 1440
+                        
+                        if diff_minutes > 0:
+                            diff_str = f"<span style='color:#ff6666;'>+{diff_minutes} min</span>"
+                        elif diff_minutes < 0:
+                            diff_str = f"<span style='color:#66ff66;'>{diff_minutes} min</span>"
+                        else:
+                            diff_str = "<span style='color:#aaaaaa;'>i tid</span>"
+                            
+                        info_parts.append(f"Tid: <b>{actual_time_str}</b> ({diff_str})")
+                    else:
+                        info_parts.append(f"Tid: <b>{actual_time_str}</b>")
+                        
+                info_text = " | ".join(info_parts)
             
             elif is_current:
                 icon = "📍" 
@@ -1890,7 +1933,6 @@ def render_kororder_page():
                 border = "#ffcc00"
                 title_color = "#ffcc00"
                 if dist != 999999:
-                    # Visar även minsta avstånd så du kan se att den minns
                     min_record = ""
                     if st.session_state.target_tracking['name'] == stop['name']:
                         min_record = f" | Närmast hittills: {int(st.session_state.target_tracking['min_dist'])}m"
@@ -1901,37 +1943,83 @@ def render_kororder_page():
             elif dist < 5000 and has_gps: 
                 info_text = f"Avstånd: {int(dist)} m"
 
+            time_display = stop['time'] if stop['time'] else "-"
+
+# --- EXTRA INFO (Endast Tekniskt uppehåll etc inuti rutan) ---
+            extra_html = ""
+            if stop.get('infos'):
+                for info in stop['infos']:
+                    extra_html += f"<div style='margin-top: 8px; padding: 6px 10px; background-color: rgba(77, 166, 255, 0.1); border-radius: 4px; font-size: 14px; border-left: 3px solid #4da6ff; color: #e6f2ff;'>ℹ️ {info}</div>"
+
+            # Bygg ihop hela HTML-kortet
             card_html = f"""
-            <div style="padding: 12px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 8px; background-color: {bg};">
+            <div style="padding: 12px; border-radius: 8px; border: 1px solid {border}; margin-bottom: 4px; background-color: {bg};">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; padding:0; font-size: 18px; color: {title_color};">
+                    <div style="flex-grow:1;">
+                        <h3 style="margin:0; padding:0; font-size: 17px; color: {title_color};">
                             {icon} {stop['name']}
                         </h3>
                         <small style="color: #bbb;">{info_text}</small>
                     </div>
                     <div style="text-align:right; font-weight:bold; font-size: 16px;">
-                        {stop['time']}
+                        {time_display}
                     </div>
                 </div>
+                {extra_html}
             </div>
             """
-            st.markdown(card_html, unsafe_allow_html=True)
             
-            # --- MANUELL KNAPP (Bara på den aktuella stationen) ---
-            if is_current:
-                col1, col2 = st.columns([3, 2])
-                with col2:
-                    if st.button(f"✅ Bocka av manuellt", key=f"man_pass_{i}", help="Tryck här om GPS:en inte hänger med"):
-                        st.session_state.passed_stations_set.add(stop['name'])
+            # --- RITA UT HUVUDKORTET ---
+            if is_passed:
+                st.markdown(card_html, unsafe_allow_html=True)
+            else:
+                col_box, col_btn = st.columns([7, 3]) 
+                
+                with col_box:
+                    st.markdown(card_html, unsafe_allow_html=True)
+                    
+                with col_btn:
+                    st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
+                    btn_text = "✅ Nu" if is_current else "⏩ Hit"
+                    
+                    if st.button(btn_text, key=f"man_pass_{i}", use_container_width=True, help="Bockar av denna och alla stationer innan"):
+                        for j in range(i + 1):
+                            st.session_state.passed_stations_set.add(stops[j]['name'])
+                        
                         now = datetime.now()
-                        st.session_state.station_log[stop['name']] = {"time": now, "speed": None}
+                        st.session_state.station_log[stop['name']] = {"time": now}
                         st.session_state.last_passed_update = {"lat": stop['lat'], "lon": stop['lon'], "time": now}
                         st.rerun()
-            
-            if stop['warnings']:
-                for w in stop['warnings']: 
-                    st.error(f"⚠️ {w}")
+
+            # --- NYTT: RITA UT SÄKERHETSORDRAR MED RADERAKNAPP ---
+            if stop.get('warnings'):
+                for w_idx, w in enumerate(stop['warnings']):
+                    # Skapa ett unikt ID för just denna order
+                    warn_key = f"{stop['name']}_warn_{w_idx}"
+                    
+                    # Kolla om vi har kastat denna order i papperskorgen tidigare
+                    if warn_key not in st.session_state.dismissed_warnings:
+                        
+                        # Formatering av ordern (Fet text etc.)
+                        w_formatted = re.sub(r'(\d{1,4}\+\d{1,3})', r'<b style="color: #ffffff; font-size: 15px;">\1</b>', w)
+                        w_formatted = re.sub(r'(Halvutrustad nedsättning|Helutrustad nedsättning)', r'<b style="color: #ffcc00;">\1</b>', w_formatted, flags=re.IGNORECASE)
+                        w_formatted = re.sub(r'(\d{2,3}\s*(?:km/h|km/tim))', r'<b style="color: #ffcc00; font-size: 16px; background-color: rgba(255, 204, 0, 0.2); padding: 1px 4px; border-radius: 3px;">\1</b>', w_formatted, flags=re.IGNORECASE)
+                        
+                        # Skapa två kolumner: 90% för texten, 10% för knappen
+                        warn_col, del_col = st.columns([9, 1])
+                        
+                        with warn_col:
+                            st.markdown(f"<div style='margin-bottom: 6px; padding: 6px 10px; background-color: rgba(255, 77, 77, 0.1); border-radius: 4px; font-size: 14px; border-left: 3px solid #ff4d4d; color: #ffe6e6;'>⚠️ {w_formatted}</div>", unsafe_allow_html=True)
+                            
+                        with del_col:
+                            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
+                            # Papperskorg-knapp
+                            if st.button("🗑️", key=f"del_warn_{i}_{w_idx}", help="Dölj denna order"):
+                                st.session_state.dismissed_warnings.add(warn_key)
+                                st.rerun()
+
+
+        
                     
 # ==============================================================================
 # HUVUD-ROUTER FÖR APPLIKATIONEN
