@@ -384,7 +384,8 @@ def hitta_max_hastighet(bana, tåglängd, bromsprocent):
     if bana not in HASTIGHETS_DATA:
         return "Okänd bana vald."
     valt_längdintervall = None
-    for (min_längd, max_längd), data in HASTIGHETS_DATA[bana].items():
+    for key, data in HASTIGHETS_DATA[bana].items():
+        min_längd, max_längd = key[0], key[1]
         if min_längd <= tåglängd <= max_längd:
             valt_längdintervall = data
             break
